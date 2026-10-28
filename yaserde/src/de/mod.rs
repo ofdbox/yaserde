@@ -110,6 +110,18 @@ impl<R: Read> Deserializer<R> {
     self.context.depth
   }
 
+  pub fn current_namespace(&self) -> Option<&str> {
+    self.context.current_namespace()
+  }
+
+  pub fn set_current_namespace(&mut self, namespace: Option<String>) {
+    self.context.set_current_namespace(namespace);
+  }
+
+  pub fn namespace_matches(&self, namespace: &str) -> bool {
+    self.context.current_namespace().unwrap_or("") == namespace
+  }
+
   pub fn read_inner_value<T, F: FnOnce(&mut Self) -> Result<T>>(&mut self, f: F) -> Result<T> {
     match self.next_event()? {
       XmlEvent::StartElement { name, .. } => {

@@ -190,10 +190,15 @@ pub fn parse(
       let label_name = field.renamed_label_without_namespace();
 
       let namespace = field.prefix_namespace(root_attributes);
+      let namespace_pattern = if field.inherits_namespace() {
+        quote!((namespace, #label_name) if reader.namespace_matches(namespace))
+      } else {
+        quote!((#namespace, #label_name))
+      };
 
       let visit_struct = |struct_name: syn::Path, action: TokenStream| {
         Some(quote! {
-          (#namespace, #label_name) => {
+          #namespace_pattern => {
             if let Ok(::yaserde::__xml::reader::XmlEvent::StartElement { .. }) = reader.peek() {
               // If substruct's start element found then deserialize substruct
               let value = <#struct_name as ::yaserde::YaDeserialize>::deserialize(reader)?;
@@ -487,6 +492,17 @@ pub fn parse(
   };
 
   let flatten = root_attributes.flatten;
+  let (enter_namespace, restore_namespace) = match &root_attributes.namespace {
+    Some(namespace) => (
+      quote! {
+        let yaserde_previous_namespace =
+          reader.current_namespace().map(::std::string::ToString::to_string);
+        reader.set_current_namespace(::std::option::Option::Some(#namespace.to_string()));
+      },
+      quote!(reader.set_current_namespace(yaserde_previous_namespace);),
+    ),
+    None => (quote!(), quote!()),
+  };
   let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
   Ok(quote! {
@@ -502,6 +518,7 @@ pub fn parse(
             (::std::string::String::from(#root), ::std::option::Option::None)
           };
         let start_depth = reader.depth();
+        #enter_namespace
         ::yaserde::__derive_debug!("Struct {} @ {}: start to parse {:?}", stringify!(#name), start_depth,
                named_element);
 
@@ -581,6 +598,7 @@ pub fn parse(
         #visit_unused
 
         ::yaserde::__derive_debug!("Struct {} @ {}: success", stringify!(#name), start_depth);
+        #restore_namespace
         ::std::result::Result::Ok(#name{#struct_builder})
       }
     }
@@ -605,10 +623,14 @@ fn build_call_visitor(
   );
 
   let namespaces = field.namespace_values(root_attributes);
-  let namespace_pattern = quote!(#(#namespaces)|*);
+  let namespace_pattern = if field.inherits_namespace() {
+    quote!((namespace, #label_name) if reader.namespace_matches(namespace))
+  } else {
+    quote!((#(#namespaces)|*, #label_name))
+  };
 
   Some(quote! {
-    (#namespace_pattern, #label_name) => {
+    #namespace_pattern => {
       let visitor = #visitor_label{};
 
       #namespaces_matching

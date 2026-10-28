@@ -790,3 +790,41 @@ fn nested_struct_inherits_parent_namespace() {
   serialize_and_validate!(model, content);
   deserialize_and_validate!(content, model, Root);
 }
+
+#[test]
+fn nested_struct_inherits_namespace_without_field_annotations() {
+  init();
+
+  #[derive(Debug, PartialEq, YaDeserialize, YaSerialize)]
+  #[yaserde(rename = "child")]
+  struct Child {
+    value: String,
+  }
+
+  #[derive(Debug, PartialEq, YaDeserialize, YaSerialize)]
+  #[yaserde(
+    rename = "root",
+    namespace = "http://www.sample.com/ns/domain",
+    xmlns = {
+      "ns" = "http://www.sample.com/ns/domain"
+    }
+  )]
+  struct Root {
+    child: Child,
+  }
+
+  let content = r#"
+    <ns:root xmlns:ns="http://www.sample.com/ns/domain">
+      <ns:child><ns:value>ok</ns:value></ns:child>
+    </ns:root>
+  "#;
+
+  let model = Root {
+    child: Child {
+      value: "ok".to_owned(),
+    },
+  };
+
+  serialize_and_validate!(model, content);
+  deserialize_and_validate!(content, model, Root);
+}

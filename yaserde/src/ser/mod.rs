@@ -123,12 +123,21 @@ impl<W: Write> Serializer<W> {
     self.context.prefix_for_uri(uri)
   }
 
+  pub fn current_namespace(&self) -> Option<&str> {
+    self.context.current_namespace()
+  }
+
+  pub fn set_current_namespace(&mut self, namespace: Option<String>) {
+    self.context.set_current_namespace(namespace);
+  }
+
   pub fn element_name(
     &self,
     namespace: Option<&str>,
     local: &str,
     fallback: Option<&str>,
   ) -> String {
+    let namespace = namespace.or_else(|| self.current_namespace());
     let prefix = namespace
       .and_then(|uri| self.prefix_for_uri(uri))
       .or(fallback);

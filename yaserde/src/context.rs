@@ -10,6 +10,7 @@ pub struct SerializeContext {
   pub(crate) skip_start_end: bool,
   pub(crate) start_event_name: Option<String>,
   pub(crate) namespaces: NamespaceStack,
+  pub(crate) current_namespace: Option<String>,
 }
 
 impl SerializeContext {
@@ -47,6 +48,16 @@ impl SerializeContext {
   pub fn prefix_for_uri(&self, uri: &str) -> Option<&str> {
     self.namespaces.prefix_for_uri(uri)
   }
+
+  /// Namespace inherited by the current element.
+  pub fn current_namespace(&self) -> Option<&str> {
+    self.current_namespace.as_deref()
+  }
+
+  /// Set the namespace inherited by children.
+  pub fn set_current_namespace(&mut self, namespace: Option<String>) {
+    self.current_namespace = namespace;
+  }
 }
 
 /// State shared by one deserialization run.
@@ -54,12 +65,23 @@ impl SerializeContext {
 pub struct DeserializeContext {
   pub(crate) depth: usize,
   pub(crate) peeked: Option<XmlEvent>,
+  pub(crate) current_namespace: Option<String>,
 }
 
 impl DeserializeContext {
   /// Current XML nesting depth.
   pub fn depth(&self) -> usize {
     self.depth
+  }
+
+  /// Namespace inherited by the current element.
+  pub fn current_namespace(&self) -> Option<&str> {
+    self.current_namespace.as_deref()
+  }
+
+  /// Set the namespace inherited by children.
+  pub fn set_current_namespace(&mut self, namespace: Option<String>) {
+    self.current_namespace = namespace;
   }
 }
 

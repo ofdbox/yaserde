@@ -92,6 +92,14 @@ impl YaSerdeField {
   /// Runtime expression for the serialized element name.
   pub fn element_label_expr(&self, root_attributes: &YaSerdeAttribute) -> TokenStream {
     let Some(namespace) = &self.attributes.namespace else {
+      if self.attributes.prefix.is_none() {
+        let local = self.renamed_label_without_namespace();
+        return quote!(writer.element_name(
+          ::std::option::Option::None,
+          #local,
+          ::std::option::Option::None,
+        ));
+      }
       let label = self.renamed_label(root_attributes);
       return quote!((#label).to_string());
     };
@@ -119,6 +127,11 @@ impl YaSerdeField {
       #local,
       #fallback,
     ))
+  }
+
+  /// Whether this field inherits the parent element namespace.
+  pub fn inherits_namespace(&self) -> bool {
+    self.attributes.namespace.is_none() && self.attributes.prefix.is_none()
   }
 
   pub fn get_visitor_ident(&self, struct_name: Option<&syn::Path>) -> Ident {
@@ -244,6 +257,10 @@ impl YaSerdeField {
     element_namespace: TokenStream,
     element_name: TokenStream,
   ) -> TokenStream {
+    if self.inherits_namespace() {
+      return quote!();
+    }
+
     root_attributes.get_namespace_matching(
       &self.attributes.prefix,
       self.attributes.namespace.as_deref(),

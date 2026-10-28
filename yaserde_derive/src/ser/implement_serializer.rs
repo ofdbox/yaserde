@@ -35,6 +35,17 @@ pub fn implement_serializer(
   } else {
     quote!(writer.pop_namespaces();)
   };
+  let (enter_namespace, restore_namespace) = match &attributes.namespace {
+    Some(namespace) => (
+      quote! {
+        let yaserde_previous_namespace =
+          writer.current_namespace().map(::std::string::ToString::to_string);
+        writer.set_current_namespace(::std::option::Option::Some(#namespace.to_string()));
+      },
+      quote!(writer.set_current_namespace(yaserde_previous_namespace);),
+    ),
+    None => (quote!(), quote!()),
+  };
 
   let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
@@ -46,6 +57,7 @@ pub fn implement_serializer(
         writer: &mut ::yaserde::ser::Serializer<W>,
       ) -> ::std::result::Result<(), ::yaserde::Error> {
         let skip = writer.skip_start_end();
+        #enter_namespace
         #push_namespaces
 
         if !#flatten && !skip {
@@ -90,6 +102,7 @@ pub fn implement_serializer(
           writer.write(struct_end_event)?;
         }
         #pop_namespaces
+        #restore_namespace
 
         ::std::result::Result::Ok(())
       }
