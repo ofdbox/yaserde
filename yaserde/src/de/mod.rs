@@ -1,6 +1,7 @@
 //! Generic data structure deserialization framework.
 //!
 
+use crate::context::DeserializeContext;
 use crate::{Error, Result, YaDeserialize};
 use std::io::Read;
 use xml::name::OwnedName;
@@ -15,17 +16,15 @@ pub fn from_reader<R: Read, T: YaDeserialize>(reader: R) -> Result<T> {
 }
 
 pub struct Deserializer<R: Read> {
-  depth: usize,
   reader: EventReader<R>,
-  peeked: Option<XmlEvent>,
+  context: DeserializeContext,
 }
 
 impl<R: Read> Deserializer<R> {
   pub fn new(reader: EventReader<R>) -> Self {
     Deserializer {
-      depth: 0,
       reader,
-      peeked: None,
+      context: DeserializeContext::default(),
     }
   }
 
@@ -41,11 +40,11 @@ impl<R: Read> Deserializer<R> {
   }
 
   pub fn peek(&mut self) -> Result<&XmlEvent> {
-    if self.peeked.is_none() {
-      self.peeked = Some(self.inner_next()?);
+    if self.context.peeked.is_none() {
+      self.context.peeked = Some(self.inner_next()?);
     }
 
-    if let Some(ref next) = self.peeked {
+    if let Some(ref next) = self.context.peeked {
       Ok(next)
     } else {
       Err(Error::custom("unable to peek next item"))
@@ -71,36 +70,48 @@ impl<R: Read> Deserializer<R> {
   }
 
   pub fn next_event(&mut self) -> Result<XmlEvent> {
-    let next_event = if let Some(peeked) = self.peeked.take() {
+    let next_event = if let Some(peeked) = self.context.peeked.take() {
       peeked
     } else {
       self.inner_next()?
     };
     match next_event {
       XmlEvent::StartElement { .. } => {
-        self.depth += 1;
+        self.context.depth += 1;
       }
       XmlEvent::EndElement { .. } => {
-        self.depth -= 1;
+        self.context.depth -= 1;
       }
       _ => {}
     }
-    log::debug!("Fetched {:?}, new depth {}", next_event, self.depth);
+    log::debug!(
+      "Fetched {:?}, new depth {}",
+      next_event,
+      self.context.depth
+    );
     Ok(next_event)
   }
 
   pub fn skip_element(&mut self, mut cb: impl FnMut(&XmlEvent)) -> Result<()> {
-    let depth = self.depth;
+    let depth = self.context.depth;
 
-    while self.depth >= depth {
+    while self.context.depth >= depth {
       cb(&self.next_event()?);
     }
 
     Ok(())
   }
 
+  pub fn context(&self) -> &DeserializeContext {
+    &self.context
+  }
+
+  pub fn context_mut(&mut self) -> &mut DeserializeContext {
+    &mut self.context
+  }
+
   pub fn depth(&self) -> usize {
-    self.depth
+    self.context.depth
   }
 
   pub fn read_inner_value<T, F: FnOnce(&mut Self) -> Result<T>>(&mut self, f: F) -> Result<T> {

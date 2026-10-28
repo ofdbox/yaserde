@@ -1,6 +1,7 @@
 //! Generic data structure serialization framework.
 //!
 
+use crate::context::SerializeContext;
 use crate::{Error, Result, YaSerialize};
 use std::io::{Cursor, Write};
 use std::str;
@@ -66,16 +67,14 @@ pub fn to_string_attribute_value<T: YaSerialize>(model: &T) -> Result<String> {
 
 pub struct Serializer<W: Write> {
   writer: EventWriter<W>,
-  skip_start_end: bool,
-  start_event_name: Option<String>,
+  context: SerializeContext,
 }
 
 impl<W: Write> Serializer<W> {
   pub fn new(writer: EventWriter<W>) -> Self {
     Serializer {
       writer,
-      skip_start_end: false,
-      start_event_name: None,
+      context: SerializeContext::default(),
     }
   }
 
@@ -102,20 +101,28 @@ impl<W: Write> Serializer<W> {
     self.writer.into_inner()
   }
 
+  pub fn context(&self) -> &SerializeContext {
+    &self.context
+  }
+
+  pub fn context_mut(&mut self) -> &mut SerializeContext {
+    &mut self.context
+  }
+
   pub fn skip_start_end(&self) -> bool {
-    self.skip_start_end
+    self.context.skip_start_end()
   }
 
   pub fn set_skip_start_end(&mut self, state: bool) {
-    self.skip_start_end = state;
+    self.context.set_skip_start_end(state);
   }
 
   pub fn get_start_event_name(&self) -> Option<String> {
-    self.start_event_name.clone()
+    self.context.start_event_name().map(str::to_owned)
   }
 
   pub fn set_start_event_name(&mut self, name: Option<String>) {
-    self.start_event_name = name;
+    self.context.set_start_event_name(name);
   }
 
   pub fn write<'a, E>(&mut self, event: E) -> xml::writer::Result<()>

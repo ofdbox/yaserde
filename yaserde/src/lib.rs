@@ -101,11 +101,13 @@ pub use yaserde_derive::*;
 use std::io::{Read, Write};
 use xml::writer::XmlEvent;
 
+pub mod context;
 pub mod de;
 mod error;
 pub mod primitives;
 pub mod ser;
 
+pub use context::{DeserializeContext, SerializeContext};
 pub use error::{Error, Result};
 
 /// A **data structure** that can be deserialized from any data format supported by YaSerDe.
