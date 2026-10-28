@@ -150,5 +150,8 @@ fn parsing_svd() {
   let reference =
     fs::read_to_string("tests/data/svd.xml").expect("something went wrong reading the file");
 
-  assert_eq!(reference, serialized)
+  assert_eq!(
+    reference.replace("\r\n", "\n"),
+    serialized.replace("\r\n", "\n")
+  )
 }
