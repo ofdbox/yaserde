@@ -2,17 +2,22 @@ use crate::common::YaSerdeField;
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 
-pub fn enclose_formatted_characters_for_value(label: &Ident, label_name: String) -> TokenStream {
+pub fn enclose_formatted_characters_for_value(
+  label: &Ident,
+  label_name: TokenStream,
+) -> TokenStream {
   enclose_xml_event(label_name, quote!(format!("{}", #label)))
 }
 
-pub fn enclose_characters(label: &Option<Ident>, label_name: String) -> TokenStream {
+pub fn enclose_characters(label: &Option<Ident>, label_name: TokenStream) -> TokenStream {
   enclose_xml_event(label_name, quote!(format!("{}", self.#label)))
 }
 
-fn enclose_xml_event(label_name: String, yaserde_format: TokenStream) -> TokenStream {
+fn enclose_xml_event(label_name: TokenStream, yaserde_format: TokenStream) -> TokenStream {
   quote! {
-    let start_event = ::yaserde::__xml::writer::XmlEvent::start_element(#label_name);
+    let yaserde_label_name = #label_name;
+    let start_event =
+      ::yaserde::__xml::writer::XmlEvent::start_element(yaserde_label_name.as_str());
     writer.write(start_event)?;
 
     let yaserde_value = #yaserde_format;
@@ -26,7 +31,7 @@ fn enclose_xml_event(label_name: String, yaserde_format: TokenStream) -> TokenSt
 
 pub fn serialize_element(
   label: &Option<Ident>,
-  label_name: String,
+  label_name: TokenStream,
   conditions: &TokenStream,
 ) -> Option<TokenStream> {
   let inner = enclose_characters(label, label_name);

@@ -223,13 +223,14 @@ pub fn serialize(
           )),
         });
       }
-      let label_name = field.renamed_label(root_attributes);
+      let label_name = field.element_label_expr(root_attributes);
       let conditions = condition_generator(&label, &field);
 
       if field.is_cdata() {
         return Ok(Some(quote! {
             #conditions {
-              let start_event = ::yaserde::__xml::writer::XmlEvent::start_element(#label_name);
+              let yaserde_label_name = #label_name;
+              let start_event = ::yaserde::__xml::writer::XmlEvent::start_element(yaserde_label_name.as_str());
               writer.write(start_event)?;
               let data = ::yaserde::__xml::writer::events::XmlEvent::cdata(&self.#label);
               writer.write(data)?;

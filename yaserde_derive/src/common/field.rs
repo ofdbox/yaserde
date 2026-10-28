@@ -89,6 +89,38 @@ impl YaSerdeField {
     format!("{}{}", prefix, label)
   }
 
+  /// Runtime expression for the serialized element name.
+  pub fn element_label_expr(&self, root_attributes: &YaSerdeAttribute) -> TokenStream {
+    let Some(namespace) = &self.attributes.namespace else {
+      let label = self.renamed_label(root_attributes);
+      return quote!((#label).to_string());
+    };
+
+    let canonical = root_attributes
+      .namespace_aliases
+      .get(namespace)
+      .map_or(namespace, |value| value);
+    let prefix = root_attributes
+      .namespaces
+      .iter()
+      .find_map(|(prefix, uri)| (uri == canonical).then(|| prefix.clone()));
+    let fallback = if root_attributes.default_namespace == prefix {
+      quote!(::std::option::Option::None)
+    } else {
+      match prefix {
+        Some(prefix) => quote!(::std::option::Option::Some(#prefix)),
+        None => quote!(::std::option::Option::None),
+      }
+    };
+    let local = self.renamed_label_without_namespace();
+
+    quote!(writer.element_name(
+      ::std::option::Option::Some(#canonical),
+      #local,
+      #fallback,
+    ))
+  }
+
   pub fn get_visitor_ident(&self, struct_name: Option<&syn::Path>) -> Ident {
     let label = self.renamed_label_without_namespace();
 
