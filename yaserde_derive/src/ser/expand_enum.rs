@@ -307,7 +307,13 @@ fn inner_enum_inspector(
                   if variant_attrs.flatten || field.is_flatten() {
                      match_field(&quote!{ ::yaserde::YaSerialize::serialize(item, writer)?})
                    } else {
-                     write_element(&match_field(&serialize))
+                     match_field(&quote! {
+                       writer.set_start_event_name(
+                         ::std::option::Option::Some(#label_name.to_string()),
+                       );
+                       writer.set_skip_start_end(false);
+                       ::yaserde::YaSerialize::serialize(item, writer)?;
+                     })
                    }
                 }
                 Field::FieldString => match_field(&write_element(&write_string_chars)),
