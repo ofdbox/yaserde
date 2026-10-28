@@ -16,6 +16,26 @@ pub fn implement_serializer(
   let namespaces_definition = generate_namespaces_definition(attributes);
   let flatten = attributes.flatten;
 
+  let namespace_pairs = attributes.namespaces.iter().map(|(prefix, namespace)| {
+    let prefix = if attributes.default_namespace.as_deref() == Some(prefix) {
+      ""
+    } else {
+      prefix.as_str()
+    };
+    quote!((#prefix.to_string(), #namespace.to_string()))
+  });
+  let namespace_pairs: Vec<_> = namespace_pairs.collect();
+  let push_namespaces = if namespace_pairs.is_empty() {
+    quote!()
+  } else {
+    quote!(writer.push_namespaces(::std::vec![#(#namespace_pairs),*]);)
+  };
+  let pop_namespaces = if namespace_pairs.is_empty() {
+    quote!()
+  } else {
+    quote!(writer.pop_namespaces();)
+  };
+
   let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
   quote! {
@@ -26,6 +46,7 @@ pub fn implement_serializer(
         writer: &mut ::yaserde::ser::Serializer<W>,
       ) -> ::std::result::Result<(), ::yaserde::Error> {
         let skip = writer.skip_start_end();
+        #push_namespaces
 
         if !#flatten && !skip {
           let mut child_attributes = ::std::vec![];
@@ -68,6 +89,7 @@ pub fn implement_serializer(
           let struct_end_event = ::yaserde::__xml::writer::XmlEvent::end_element();
           writer.write(struct_end_event)?;
         }
+        #pop_namespaces
 
         ::std::result::Result::Ok(())
       }

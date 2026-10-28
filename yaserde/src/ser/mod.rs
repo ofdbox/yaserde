@@ -1,7 +1,7 @@
 //! Generic data structure serialization framework.
 //!
 
-use crate::context::SerializeContext;
+use crate::context::{NamespaceFrame, SerializeContext};
 use crate::{Error, Result, YaSerialize};
 use std::io::{Cursor, Write};
 use std::str;
@@ -107,6 +107,35 @@ impl<W: Write> Serializer<W> {
 
   pub fn context_mut(&mut self) -> &mut SerializeContext {
     &mut self.context
+  }
+
+  pub fn push_namespaces(&mut self, declarations: Vec<(String, String)>) {
+    self
+      .context
+      .push_namespaces(NamespaceFrame::new(declarations));
+  }
+
+  pub fn pop_namespaces(&mut self) {
+    self.context.pop_namespaces();
+  }
+
+  pub fn prefix_for_uri(&self, uri: &str) -> Option<&str> {
+    self.context.prefix_for_uri(uri)
+  }
+
+  pub fn element_name(
+    &self,
+    namespace: Option<&str>,
+    local: &str,
+    fallback: Option<&str>,
+  ) -> String {
+    let prefix = namespace
+      .and_then(|uri| self.prefix_for_uri(uri))
+      .or(fallback);
+    match prefix {
+      Some(prefix) if !prefix.is_empty() => format!("{prefix}:{local}"),
+      _ => local.to_owned(),
+    }
   }
 
   pub fn skip_start_end(&self) -> bool {
