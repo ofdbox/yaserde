@@ -118,8 +118,19 @@ impl<R: Read> Deserializer<R> {
     self.context.set_current_namespace(namespace);
   }
 
+  pub fn set_namespace_aliases(&mut self, aliases: std::collections::BTreeMap<String, String>) {
+    self.context.set_namespace_aliases(aliases);
+  }
+
+  pub fn current_namespace_aliases(&self) -> &std::collections::BTreeMap<String, String> {
+    self.context.namespace_aliases()
+  }
+
   pub fn namespace_matches(&self, namespace: &str) -> bool {
-    self.context.current_namespace().unwrap_or("") == namespace
+    let current = self
+      .context
+      .canonicalize(self.context.current_namespace().unwrap_or(""));
+    current == self.context.canonicalize(namespace)
   }
 
   pub fn read_inner_value<T, F: FnOnce(&mut Self) -> Result<T>>(&mut self, f: F) -> Result<T> {

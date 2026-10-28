@@ -66,6 +66,7 @@ pub struct DeserializeContext {
   pub(crate) depth: usize,
   pub(crate) peeked: Option<XmlEvent>,
   pub(crate) current_namespace: Option<String>,
+  pub(crate) namespace_aliases: std::collections::BTreeMap<String, String>,
 }
 
 impl DeserializeContext {
@@ -82,6 +83,24 @@ impl DeserializeContext {
   /// Set the namespace inherited by children.
   pub fn set_current_namespace(&mut self, namespace: Option<String>) {
     self.current_namespace = namespace;
+  }
+
+  /// Replace the accepted namespace aliases.
+  pub fn set_namespace_aliases(&mut self, aliases: std::collections::BTreeMap<String, String>) {
+    self.namespace_aliases = aliases;
+  }
+
+  /// Current alias mappings.
+  pub fn namespace_aliases(&self) -> &std::collections::BTreeMap<String, String> {
+    &self.namespace_aliases
+  }
+
+  /// Canonicalize a namespace URI.
+  pub fn canonicalize<'a>(&'a self, namespace: &'a str) -> &'a str {
+    match self.namespace_aliases.get(namespace) {
+      Some(value) => value.as_str(),
+      None => namespace,
+    }
   }
 }
 

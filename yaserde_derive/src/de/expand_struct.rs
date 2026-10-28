@@ -503,6 +503,24 @@ pub fn parse(
     ),
     None => (quote!(), quote!()),
   };
+  let alias_pairs = root_attributes
+    .namespace_aliases
+    .iter()
+    .map(|(alias, canonical)| quote!((#alias.to_string(), #canonical.to_string())))
+    .collect::<Vec<_>>();
+  let (enter_aliases, restore_aliases) = if alias_pairs.is_empty() {
+    (quote!(), quote!())
+  } else {
+    (
+      quote! {
+        let yaserde_previous_aliases = reader.current_namespace_aliases().clone();
+        reader.set_namespace_aliases(::std::collections::BTreeMap::from([
+          #(#alias_pairs),*
+        ]));
+      },
+      quote!(reader.set_namespace_aliases(yaserde_previous_aliases);),
+    )
+  };
   let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
   Ok(quote! {
@@ -519,6 +537,7 @@ pub fn parse(
           };
         let start_depth = reader.depth();
         #enter_namespace
+        #enter_aliases
         ::yaserde::__derive_debug!("Struct {} @ {}: start to parse {:?}", stringify!(#name), start_depth,
                named_element);
 
@@ -599,6 +618,7 @@ pub fn parse(
 
         ::yaserde::__derive_debug!("Struct {} @ {}: success", stringify!(#name), start_depth);
         #restore_namespace
+        #restore_aliases
         ::std::result::Result::Ok(#name{#struct_builder})
       }
     }
