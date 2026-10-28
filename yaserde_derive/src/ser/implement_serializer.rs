@@ -47,6 +47,11 @@ pub fn implement_serializer(
     None => (quote!(), quote!()),
   };
 
+  let namespace_option = match &attributes.namespace {
+    Some(namespace) => quote!(::std::option::Option::Some(#namespace)),
+    None => quote!(::std::option::Option::None),
+  };
+
   let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
   quote! {
@@ -60,13 +65,22 @@ pub fn implement_serializer(
         #enter_namespace
         #push_namespaces
 
+        let yaserde_label = match writer.get_start_event_name() {
+          ::std::option::Option::Some(name) if !name.contains(':') => writer.element_name(
+            #namespace_option,
+            name.as_str(),
+            ::std::option::Option::None,
+          ),
+          ::std::option::Option::Some(name) => name.to_string(),
+          ::std::option::Option::None => #root.to_string(),
+        };
+
         if !#flatten && !skip {
           let mut child_attributes = ::std::vec![];
           let mut child_attributes_namespace = ::yaserde::__xml::namespace::Namespace::empty();
 
-          let yaserde_label = writer.get_start_event_name().unwrap_or_else(|| #root.to_string());
           let struct_start_event =
-            ::yaserde::__xml::writer::XmlEvent::start_element(yaserde_label.as_ref()) #namespaces_definition;
+            ::yaserde::__xml::writer::XmlEvent::start_element(yaserde_label.as_str()) #namespaces_definition;
           #append_attributes
 
           let event: ::yaserde::__xml::writer::events::XmlEvent = struct_start_event.into();

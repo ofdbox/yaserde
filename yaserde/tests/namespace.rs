@@ -987,3 +987,44 @@ fn enum_variant_inherits_namespace_for_nested_struct() {
   let parsed: Result<Root, _> = yaserde::de::from_str(&xml);
   assert_eq!(parsed.map_err(|e| e.to_string()), Ok(model));
 }
+
+#[test]
+fn child_can_declare_local_namespace() {
+  init();
+
+  #[derive(Debug, PartialEq, YaSerialize, YaDeserialize)]
+  #[yaserde(
+    rename = "child",
+    namespace = "http://www.sample.com/ns/other",
+    xmlns = {
+      "other" = "http://www.sample.com/ns/other"
+    }
+  )]
+  struct Child {
+    value: String,
+  }
+
+  #[derive(Debug, PartialEq, YaSerialize, YaDeserialize)]
+  #[yaserde(
+    rename = "root",
+    namespace = "http://www.sample.com/ns/domain",
+    xmlns = {
+      "ns" = "http://www.sample.com/ns/domain"
+    }
+  )]
+  struct Root {
+    #[yaserde(namespace = "http://www.sample.com/ns/other")]
+    child: Child,
+  }
+
+  let content = r#"<ns:root xmlns:ns="http://www.sample.com/ns/domain"><other:child xmlns:other="http://www.sample.com/ns/other"><other:value>ok</other:value></other:child></ns:root>"#;
+
+  let model = Root {
+    child: Child {
+      value: "ok".to_owned(),
+    },
+  };
+
+  serialize_and_validate!(model, content);
+  deserialize_and_validate!(content, model, Root);
+}
