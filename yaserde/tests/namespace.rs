@@ -703,3 +703,50 @@ fn struct_xmlns_default_without_field_prefix() {
   serialize_and_validate!(model, content);
   deserialize_and_validate!(content, model, Book);
 }
+
+#[test]
+fn struct_namespace_alias() {
+  init();
+
+  #[derive(Debug, PartialEq, YaDeserialize, YaSerialize)]
+  #[yaserde(
+    rename = "book",
+    namespace = "http://www.sample.com/ns/domain",
+    xmlns = {
+      "ns" = "http://www.sample.com/ns/domain"
+    },
+    namespace_aliases = {
+      "http://www.sample.com/ns" = "http://www.sample.com/ns/domain"
+    }
+  )]
+  pub struct Book {
+    #[yaserde(namespace = "http://www.sample.com/ns/domain")]
+    author: String,
+  }
+
+  let canonical = r#"
+    <ns:book xmlns:ns="http://www.sample.com/ns/domain">
+      <ns:author>Antoine de Saint-Exupery</ns:author>
+    </ns:book>
+  "#;
+
+  let alias = r#"
+    <foo:book xmlns:foo="http://www.sample.com/ns">
+      <foo:author>Antoine de Saint-Exupery</foo:author>
+    </foo:book>
+  "#;
+
+  let model = Book {
+    author: "Antoine de Saint-Exupery".to_owned(),
+  };
+
+  serialize_and_validate!(model, canonical);
+  deserialize_and_validate!(canonical, model, Book);
+  deserialize_and_validate!(
+    alias,
+    Book {
+      author: "Antoine de Saint-Exupery".to_owned(),
+    },
+    Book
+  );
+}

@@ -28,6 +28,9 @@ pub struct YaSerdeAttribute {
   /// Default namespace URI for this element and its descendants.
   #[serde(default)]
   pub xmlns_default: Option<String>,
+  /// Accepted namespace URI aliases, keyed by alias URI.
+  #[serde(default)]
+  pub namespace_aliases: BTreeMap<String, String>,
   /// Declare all namespaces with prefix/URL
   #[serde(default)]
   pub namespaces: BTreeMap<String, String>,
@@ -132,6 +135,22 @@ impl YaSerdeAttribute {
       }
     }
 
+    for (alias, canonical) in &self.namespace_aliases {
+      if alias.is_empty() || canonical.is_empty() {
+        return Err("namespace_aliases must not contain empty URIs".to_owned());
+      }
+      if alias == canonical {
+        return Err(format!(
+          "namespace alias `{alias}` must differ from its canonical namespace"
+        ));
+      }
+      if self.namespace_aliases.contains_key(canonical) {
+        return Err(format!(
+          "namespace alias `{alias}` points to another alias `{canonical}`"
+        ));
+      }
+    }
+
     Ok(())
   }
 
@@ -173,6 +192,12 @@ impl YaSerdeAttribute {
       other.xmlns_default,
       "xmlns_default",
     )?;
+    for (alias, namespace) in other.namespace_aliases {
+      if self.namespace_aliases.contains_key(&alias) {
+        return Err(format!("namespace_aliases.{}", alias));
+      }
+      self.namespace_aliases.insert(alias, namespace);
+    }
     for (prefix, namespace) in other.xmlns {
       if self.xmlns.contains_key(&prefix) {
         return Err(format!("xmlns.{}", prefix));
@@ -209,10 +234,14 @@ impl YaSerdeAttribute {
 
   pub fn namespace_prefix(&self) -> Option<String> {
     if let Some(namespace) = &self.namespace {
+      let canonical = self
+        .namespace_aliases
+        .get(namespace)
+        .map_or(namespace, |value| value);
       return self
         .namespaces
         .iter()
-        .find_map(|(prefix, uri)| (uri == namespace).then(|| prefix.clone()));
+        .find_map(|(prefix, uri)| (uri == canonical).then(|| prefix.clone()));
     }
     self.prefix.clone()
   }
@@ -235,10 +264,24 @@ impl YaSerdeAttribute {
     take_root_prefix: bool,
   ) -> TokenStream {
     if let Some(expected_namespace) = expected_namespace {
+      let canonical = self
+        .namespace_aliases
+        .get(expected_namespace)
+        .map_or(expected_namespace, String::as_str);
+      let mut accepted = vec![canonical.to_owned()];
+      accepted.extend(
+        self
+          .namespace_aliases
+          .iter()
+          .filter(|(_, target)| *target == canonical)
+          .map(|(alias, _)| alias.clone()),
+      );
+      accepted.sort();
+      accepted.dedup();
       return quote!(
         match #element_namespace {
           ::std::option::Option::Some(namespace)
-            if namespace.as_str() == #expected_namespace => {}
+            if #(namespace.as_str() == #accepted)||* => {}
           ::std::option::Option::Some(namespace) => {
             let msg = ::std::format!(
               "bad namespace for {}, found {}",
@@ -251,7 +294,7 @@ impl YaSerdeAttribute {
             let msg = ::std::format!(
               "missing namespace for {}, expected {}",
               #element_name,
-              #expected_namespace
+              #canonical
             );
             return ::std::result::Result::Err(::yaserde::Error::custom(msg));
           }

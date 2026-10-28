@@ -66,10 +66,14 @@ impl YaSerdeField {
 
   pub fn renamed_label(&self, root_attributes: &YaSerdeAttribute) -> String {
     let prefix = if let Some(namespace) = &self.attributes.namespace {
+      let canonical = root_attributes
+        .namespace_aliases
+        .get(namespace)
+        .map_or(namespace, |value| value);
       root_attributes
         .namespaces
         .iter()
-        .find_map(|(prefix, uri)| (uri == namespace).then(|| prefix.clone()))
+        .find_map(|(prefix, uri)| (uri == canonical).then(|| prefix.clone()))
     } else {
       self.attributes.prefix.clone()
     };
@@ -173,7 +177,21 @@ impl YaSerdeField {
 
   pub fn namespace_values(&self, root_attributes: &YaSerdeAttribute) -> Vec<String> {
     if let Some(namespace) = &self.attributes.namespace {
-      return vec![namespace.clone()];
+      let canonical = root_attributes
+        .namespace_aliases
+        .get(namespace)
+        .map_or(namespace, |value| value);
+      let mut values = vec![canonical.clone()];
+      values.extend(
+        root_attributes
+          .namespace_aliases
+          .iter()
+          .filter(|(_, target)| *target == canonical)
+          .map(|(alias, _)| alias.clone()),
+      );
+      values.sort();
+      values.dedup();
+      return values;
     }
 
     let mut values = Vec::new();

@@ -218,3 +218,48 @@ fn xmlns_default_rejects_conflicting_default_prefix() {
   };
   assert!(serialize_error(input).contains("xmlns_default conflicts"));
 }
+
+#[test]
+fn namespace_alias_must_not_be_empty() {
+  let input = parse_quote! {
+    #[yaserde(namespace_aliases = { "" = "http://canonical" })]
+    struct Data {
+      field: String,
+    }
+  };
+  assert_eq!(
+    serialize_error(input),
+    "namespace_aliases must not contain empty URIs"
+  );
+}
+
+#[test]
+fn namespace_alias_must_not_point_to_itself() {
+  let input = parse_quote! {
+    #[yaserde(namespace_aliases = { "http://a" = "http://a" })]
+    struct Data {
+      field: String,
+    }
+  };
+  assert_eq!(
+    serialize_error(input),
+    "namespace alias `http://a` must differ from its canonical namespace"
+  );
+}
+
+#[test]
+fn namespace_alias_must_not_chain() {
+  let input = parse_quote! {
+    #[yaserde(namespace_aliases = {
+      "http://a" = "http://b",
+      "http://b" = "http://c"
+    })]
+    struct Data {
+      field: String,
+    }
+  };
+  assert_eq!(
+    serialize_error(input),
+    "namespace alias `http://a` points to another alias `http://b`"
+  );
+}
