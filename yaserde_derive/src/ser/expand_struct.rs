@@ -192,6 +192,19 @@ pub fn serialize(
               child_attributes.extend(attributes);
             )
           }
+          Field::FieldOption { data_type } => match *data_type {
+            Field::FieldStruct { .. } => quote! {
+              if let ::std::option::Option::Some(ref value) = self.#label {
+                let (attributes, namespace) = value.serialize_attributes(
+                  ::std::vec![],
+                  ::yaserde::__xml::namespace::Namespace::empty(),
+                )?;
+                child_attributes_namespace.extend(&namespace);
+                child_attributes.extend(attributes);
+              }
+            },
+            _ => quote!(),
+          },
           _ => quote!(),
         }
       })
