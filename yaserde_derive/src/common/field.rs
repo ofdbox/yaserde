@@ -134,6 +134,25 @@ impl YaSerdeField {
     self.attributes.namespace.is_none() && self.attributes.prefix.is_none()
   }
 
+  /// Label for a namespaced XML attribute.
+  pub fn attribute_label(&self, root_attributes: &YaSerdeAttribute) -> String {
+    let Some(namespace) = &self.attributes.namespace else {
+      return self.renamed_label(root_attributes);
+    };
+    let canonical = root_attributes
+      .namespace_aliases
+      .get(namespace)
+      .map_or(namespace, |value| value);
+    let prefix = root_attributes
+      .namespaces
+      .iter()
+      .find_map(|(prefix, uri)| (uri == canonical && !prefix.is_empty()).then(|| prefix.clone()));
+    match prefix {
+      Some(prefix) => format!("{prefix}:{}", self.renamed_label_without_namespace()),
+      None => self.renamed_label_without_namespace(),
+    }
+  }
+
   pub fn get_visitor_ident(&self, struct_name: Option<&syn::Path>) -> Ident {
     let label = self.renamed_label_without_namespace();
 

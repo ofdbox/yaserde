@@ -22,7 +22,7 @@ pub fn serialize(
       let label = field.label();
 
       Ok(if field.is_attribute() {
-        let label_name = field.renamed_label(root_attributes);
+        let label_name = field.attribute_label(root_attributes);
 
         match field.get_type() {
           Field::FieldString

@@ -904,3 +904,32 @@ fn child_switches_namespace_from_root_declarations() {
   serialize_and_validate!(model, content);
   deserialize_and_validate!(content, model, Root);
 }
+
+#[test]
+fn namespaced_attribute_serializes_with_prefix() {
+  init();
+
+  #[derive(Debug, PartialEq, YaDeserialize, YaSerialize)]
+  #[yaserde(
+    rename = "root",
+    xmlns = {
+      "xlink" = "http://www.w3.org/1999/xlink"
+    }
+  )]
+  struct Root {
+    #[yaserde(
+      attribute = true,
+      namespace = "http://www.w3.org/1999/xlink",
+      rename = "href"
+    )]
+    href: String,
+  }
+
+  let model = Root {
+    href: "https://example.com".to_owned(),
+  };
+
+  let content =
+    r#"<root xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://example.com" />"#;
+  serialize_and_validate!(model, content);
+}
