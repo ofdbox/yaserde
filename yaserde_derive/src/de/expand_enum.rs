@@ -25,6 +25,17 @@ pub fn parse(
     .collect::<syn::Result<_>>()?;
 
   let flatten = root_attributes.flatten;
+  let (enter_namespace, restore_namespace) = match &root_attributes.namespace {
+    Some(namespace) => (
+      quote! {
+        let yaserde_previous_namespace =
+          reader.current_namespace().map(::std::string::ToString::to_string);
+        reader.set_current_namespace(::std::option::Option::Some(#namespace.to_string()));
+      },
+      quote!(reader.set_current_namespace(yaserde_previous_namespace);),
+    ),
+    None => (quote!(), quote!()),
+  };
   let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
   let element_name = if let Some(tag) = &root_attributes.tag {
@@ -55,6 +66,7 @@ pub fn parse(
           };
 
         let start_depth = reader.depth();
+        #enter_namespace
         ::yaserde::__derive_debug!("Enum {} @ {}: start to parse {:?}", stringify!(#name), start_depth, named_element);
 
         #namespaces_matching
@@ -106,6 +118,7 @@ pub fn parse(
         }
 
         ::yaserde::__derive_debug!("Enum {} @ {}: success", stringify!(#name), start_depth);
+        #restore_namespace
         ::std::result::Result::Ok(enum_value.unwrap_or(<#name as ::std::default::Default>::default()))
       }
     }
