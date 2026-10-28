@@ -91,7 +91,7 @@ pub fn serialize(
                 &field,
                 &label,
                 &label_name,
-                quote!(::std::result::Result::<_, ::yaserde::Error>::Ok(
+                quote!(::std::result::Result::<_, ::ofdbox_yaserde::Error>::Ok(
                   item.to_string()
                 )),
               ),
@@ -99,7 +99,7 @@ pub fn serialize(
                 &field,
                 &label,
                 &label_name,
-                quote!(::yaserde::ser::to_string_attribute_value(item)),
+                quote!(::ofdbox_yaserde::ser::to_string_attribute_value(item)),
               ),
               _ => {
                 return Err(field.unsupported(
@@ -113,7 +113,7 @@ pub fn serialize(
                 .as_ref()
                 .map_or_else(
                   || ::std::result::Result::Ok(::std::string::String::new()),
-                  |v| ::yaserde::ser::to_string_attribute_value(v),
+                  |v| ::ofdbox_yaserde::ser::to_string_attribute_value(v),
                 )?
               }),
               quote!({
@@ -131,7 +131,7 @@ pub fn serialize(
             }
           },
           Field::FieldStruct { .. } => field.ser_wrap_default_attribute(
-            Some(quote! { ::yaserde::ser::to_string_attribute_value(&self.#label)? }),
+            Some(quote! { ::ofdbox_yaserde::ser::to_string_attribute_value(&self.#label)? }),
             quote!({
               struct_start_event.attr(#label_name, &yaserde_inner)
             }),
@@ -170,7 +170,7 @@ pub fn serialize(
               Some(quote! {
                 self.#label
                   .iter()
-                  .map(|item| ::yaserde::ser::to_string_attribute_value(item))
+                  .map(|item| ::ofdbox_yaserde::ser::to_string_attribute_value(item))
                   .collect::<::std::result::Result<::std::vec::Vec<_>, _>>()?
                   .join(" ")
               }),
@@ -186,7 +186,7 @@ pub fn serialize(
             quote!(
               let (attributes, namespace) = self.#label.serialize_attributes(
                 ::std::vec![],
-                ::yaserde::__xml::namespace::Namespace::empty(),
+                ::ofdbox_yaserde::__xml::namespace::Namespace::empty(),
               )?;
               child_attributes_namespace.extend(&namespace);
               child_attributes.extend(attributes);
@@ -197,7 +197,7 @@ pub fn serialize(
               if let ::std::option::Option::Some(ref value) = self.#label {
                 let (attributes, namespace) = value.serialize_attributes(
                   ::std::vec![],
-                  ::yaserde::__xml::namespace::Namespace::empty(),
+                  ::ofdbox_yaserde::__xml::namespace::Namespace::empty(),
                 )?;
                 child_attributes_namespace.extend(&namespace);
                 child_attributes.extend(attributes);
@@ -222,16 +222,16 @@ pub fn serialize(
         return Ok(match field.get_type() {
           Field::FieldOption { .. } => Some(quote!(
             let s = self.#label.as_deref().unwrap_or_default();
-            let data_event = ::yaserde::__xml::writer::XmlEvent::characters(s);
+            let data_event = ::ofdbox_yaserde::__xml::writer::XmlEvent::characters(s);
             writer.write(data_event)?;
           )),
           Field::FieldString => Some(quote!(
-            let data_event = ::yaserde::__xml::writer::XmlEvent::characters(&self.#label);
+            let data_event = ::ofdbox_yaserde::__xml::writer::XmlEvent::characters(&self.#label);
             writer.write(data_event)?;
           )),
           _ => Some(quote!(
             let yaserde_value = self.#label.to_string();
-            let data_event = ::yaserde::__xml::writer::XmlEvent::characters(&yaserde_value);
+            let data_event = ::ofdbox_yaserde::__xml::writer::XmlEvent::characters(&yaserde_value);
             writer.write(data_event)?;
           )),
         });
@@ -243,11 +243,11 @@ pub fn serialize(
         return Ok(Some(quote! {
             #conditions {
               let yaserde_label_name = #label_name;
-              let start_event = ::yaserde::__xml::writer::XmlEvent::start_element(yaserde_label_name.as_str());
+              let start_event = ::ofdbox_yaserde::__xml::writer::XmlEvent::start_element(yaserde_label_name.as_str());
               writer.write(start_event)?;
-              let data = ::yaserde::__xml::writer::events::XmlEvent::cdata(&self.#label);
+              let data = ::ofdbox_yaserde::__xml::writer::events::XmlEvent::cdata(&self.#label);
               writer.write(data)?;
-              let end_event = ::yaserde::__xml::writer::XmlEvent::end_element();
+              let end_event = ::ofdbox_yaserde::__xml::writer::XmlEvent::end_element();
               writer.write(end_event)?;
             }
         }));
@@ -314,7 +314,7 @@ pub fn serialize(
                     for item in items.iter() {
                       writer.set_start_event_name(::std::option::Option::Some(#label_name.to_string()));
                       writer.set_skip_start_end(false);
-                      ::yaserde::YaSerialize::serialize(item, writer)?;
+                      ::ofdbox_yaserde::YaSerialize::serialize(item, writer)?;
                     }
                   }
                 }
@@ -327,7 +327,7 @@ pub fn serialize(
                 if let ::std::option::Option::Some(item) = &self.#label {
                   writer.set_start_event_name(::std::option::Option::None);
                   writer.set_skip_start_end(true);
-                  ::yaserde::YaSerialize::serialize(item, writer)?;
+                  ::ofdbox_yaserde::YaSerialize::serialize(item, writer)?;
                 }
               }
             }
@@ -337,7 +337,7 @@ pub fn serialize(
                 if let ::std::option::Option::Some(item) = &self.#label {
                   writer.set_start_event_name(::std::option::Option::Some(#label_name.to_string()));
                   writer.set_skip_start_end(false);
-                  ::yaserde::YaSerialize::serialize(item, writer)?;
+                  ::ofdbox_yaserde::YaSerialize::serialize(item, writer)?;
                 }
               }
             }
@@ -360,7 +360,7 @@ pub fn serialize(
             #conditions {
               writer.set_start_event_name(#start_event);
               writer.set_skip_start_end(#skip_start);
-              ::yaserde::YaSerialize::serialize(&self.#label, writer)?;
+              ::ofdbox_yaserde::YaSerialize::serialize(&self.#label, writer)?;
             }
           })
         }
@@ -405,7 +405,7 @@ pub fn serialize(
                 if let Some(value) = item {
                   writer.set_start_event_name(None);
                   writer.set_skip_start_end(false);
-                  ::yaserde::YaSerialize::serialize(value, writer)?;
+                  ::ofdbox_yaserde::YaSerialize::serialize(value, writer)?;
                 }
               }
             }
@@ -417,7 +417,7 @@ pub fn serialize(
                   for item in &self.#label {
                       writer.set_start_event_name(::std::option::Option::None);
                     writer.set_skip_start_end(true);
-                    ::yaserde::YaSerialize::serialize(item, writer)?;
+                    ::ofdbox_yaserde::YaSerialize::serialize(item, writer)?;
                   }
                 }
               })
@@ -427,7 +427,7 @@ pub fn serialize(
                   for item in &self.#label {
                     writer.set_start_event_name(::std::option::Option::Some(#label_name.to_string()));
                     writer.set_skip_start_end(false);
-                    ::yaserde::YaSerialize::serialize(item, writer)?;
+                    ::ofdbox_yaserde::YaSerialize::serialize(item, writer)?;
                  }
                 }
               })
@@ -441,7 +441,7 @@ pub fn serialize(
             Some(quote! {
               writer.set_start_event_name(#start_event);
               writer.set_skip_start_end(#skip_start);
-              ::yaserde::YaSerialize::serialize(&self.#label, writer)?;
+              ::ofdbox_yaserde::YaSerialize::serialize(&self.#label, writer)?;
             })*/
           }
           Field::FieldVec { .. } => {
@@ -477,7 +477,7 @@ fn ser_option_vec_attribute(
       ::std::option::Option::Some(yaserde_list) => yaserde_list
         .iter()
         .map(|item| #item_serializer)
-        .collect::<::std::result::Result<::std::vec::Vec<_>, ::yaserde::Error>>()?
+        .collect::<::std::result::Result<::std::vec::Vec<_>, ::ofdbox_yaserde::Error>>()?
         .join(" "),
       ::std::option::Option::None => ::std::string::String::new(),
     }

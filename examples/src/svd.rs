@@ -1,7 +1,7 @@
 #[test]
 fn parsing_svd() {
+  use ofdbox_yaserde::YaSerialize;
   use std::fs;
-  use yaserde::YaSerialize;
 
   #[derive(PartialEq, Debug, YaSerialize)]
   struct CpuDef {
@@ -140,12 +140,12 @@ fn parsing_svd() {
   };
 
   // Display pretty printed XML
-  let yaserde_cfg = yaserde::ser::Config {
+  let yaserde_cfg = ofdbox_yaserde::ser::Config {
     perform_indent: true,
     ..Default::default()
   };
 
-  let serialized = yaserde::ser::to_string_with_config(&device, &yaserde_cfg).unwrap();
+  let serialized = ofdbox_yaserde::ser::to_string_with_config(&device, &yaserde_cfg).unwrap();
 
   let reference =
     fs::read_to_string("tests/data/svd.xml").expect("something went wrong reading the file");

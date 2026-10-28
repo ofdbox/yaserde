@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 // related to issue https://github.com/media-io/yaserde/issues/11
-use yaserde::*;
+use ofdbox_yaserde::*;
 
 #[derive(YaDeserialize, Debug, PartialEq)]
 #[yaserde(rename = "DOMSymbolItem")]
@@ -45,8 +45,8 @@ struct DOMLayer {
 
 #[test]
 fn parsing_ln_dom() {
+  use ofdbox_yaserde::de::from_str;
   use std::fs;
-  use yaserde::de::from_str;
 
   let filename = "tests/data/ln-dom.xml";
 

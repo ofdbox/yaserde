@@ -1,5 +1,5 @@
 [package]
-name = "yaserde_derive"
+name = "ofdbox-yaserde-derive"
 version = "0.13.1"
 authors = ["Marc-Antoine Arnaud <arnaud.marcantoine@gmail.com>"]
 description = "Serialization and deserialization macros"
@@ -7,7 +7,7 @@ keywords = ["Serialization", "Deserialization"]
 license = "MIT"
 repository = "https://github.com/luminvent/yaserde"
 homepage = "https://github.com/luminvent/yaserde"
-documentation = "https://docs.rs/yaserde"
+documentation = "https://docs.rs/ofdbox-yaserde-derive"
 readme = "../README.md"
 edition.workspace = true
 rust-version.workspace = true

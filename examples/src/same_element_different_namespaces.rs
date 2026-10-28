@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 // related to issue https://github.com/media-io/yaserde/issues/186
-use yaserde::*;
+use ofdbox_yaserde::*;
 
 #[derive(YaDeserialize, Debug, PartialEq)]
 #[yaserde(
@@ -19,7 +19,7 @@ pub struct ErrorType {
 
 #[test]
 fn same_element_different_namespaces() {
-  use yaserde::de::from_str;
+  use ofdbox_yaserde::de::from_str;
 
   let content = r#"
     <error_type xmlns="http://my_namespace_1/" xmlns:ext="http://my_namespace_2/">

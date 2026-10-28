@@ -1,5 +1,5 @@
 #[macro_use]
-extern crate yaserde_derive;
+extern crate ofdbox_yaserde_derive;
 
 #[derive(Debug, Default, PartialEq, YaSerialize, YaDeserialize)]
 #[yaserde(rename = "root", namespace = "http://www.ofdspec.org/2016", xmlns = { "ns" = "http://www.ofdspec.org/2016" })]
@@ -42,9 +42,9 @@ fn enum_struct_variant_writes_attributes() {
       }),
     },
   };
-  let xml = yaserde::ser::to_string(&model).unwrap();
+  let xml = ofdbox_yaserde::ser::to_string(&model).unwrap();
   println!("{xml}");
   assert!(xml.contains("Value=\"red\""), "{xml}");
-  let parsed: Result<Root, _> = yaserde::de::from_str(&xml);
+  let parsed: Result<Root, _> = ofdbox_yaserde::de::from_str(&xml);
   assert_eq!(parsed.map_err(|e| e.to_string()), Ok(model));
 }

@@ -55,12 +55,12 @@ pub fn implement_serializer(
   let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
   quote! {
-    impl #impl_generics ::yaserde::YaSerialize for #name #ty_generics #where_clause {
+    impl #impl_generics ::ofdbox_yaserde::YaSerialize for #name #ty_generics #where_clause {
       #[allow(unused_variables)]
       fn serialize<W: ::std::io::Write>(
         &self,
-        writer: &mut ::yaserde::ser::Serializer<W>,
-      ) -> ::std::result::Result<(), ::yaserde::Error> {
+        writer: &mut ::ofdbox_yaserde::ser::Serializer<W>,
+      ) -> ::std::result::Result<(), ::ofdbox_yaserde::Error> {
         let skip = writer.skip_start_end();
         #enter_namespace
         #push_namespaces
@@ -77,20 +77,20 @@ pub fn implement_serializer(
 
         if !#flatten && !skip {
           let mut child_attributes = ::std::vec![];
-          let mut child_attributes_namespace = ::yaserde::__xml::namespace::Namespace::empty();
+          let mut child_attributes_namespace = ::ofdbox_yaserde::__xml::namespace::Namespace::empty();
 
           let struct_start_event =
-            ::yaserde::__xml::writer::XmlEvent::start_element(yaserde_label.as_str()) #namespaces_definition;
+            ::ofdbox_yaserde::__xml::writer::XmlEvent::start_element(yaserde_label.as_str()) #namespaces_definition;
           #append_attributes
 
-          let event: ::yaserde::__xml::writer::events::XmlEvent = struct_start_event.into();
+          let event: ::ofdbox_yaserde::__xml::writer::events::XmlEvent = struct_start_event.into();
 
-          if let ::yaserde::__xml::writer::events::XmlEvent::StartElement {
+          if let ::ofdbox_yaserde::__xml::writer::events::XmlEvent::StartElement {
             name,
             attributes,
             namespace,
           } = event {
-            let mut attributes: ::std::vec::Vec<::yaserde::__xml::attribute::OwnedAttribute> =
+            let mut attributes: ::std::vec::Vec<::ofdbox_yaserde::__xml::attribute::OwnedAttribute> =
               attributes.into_owned().to_vec().iter().map(|k| k.to_owned()).collect();
             attributes.extend(child_attributes);
 
@@ -99,7 +99,7 @@ pub fn implement_serializer(
             let mut all_namespaces = namespace.into_owned();
             all_namespaces.extend(&child_attributes_namespace);
 
-            writer.write(::yaserde::__xml::writer::events::XmlEvent::StartElement{
+            writer.write(::ofdbox_yaserde::__xml::writer::events::XmlEvent::StartElement{
               name,
               attributes: ::std::borrow::Cow::Owned(all_attributes),
               namespace: ::std::borrow::Cow::Owned(all_namespaces)
@@ -112,7 +112,7 @@ pub fn implement_serializer(
         #inner_inspector
 
         if !#flatten && !skip {
-          let struct_end_event = ::yaserde::__xml::writer::XmlEvent::end_element();
+          let struct_end_event = ::ofdbox_yaserde::__xml::writer::XmlEvent::end_element();
           writer.write(struct_end_event)?;
         }
         #pop_namespaces
@@ -123,27 +123,27 @@ pub fn implement_serializer(
 
       fn serialize_attributes(
         &self,
-        mut source_attributes: ::std::vec::Vec<::yaserde::__xml::attribute::OwnedAttribute>,
-        mut source_namespace: ::yaserde::__xml::namespace::Namespace,
+        mut source_attributes: ::std::vec::Vec<::ofdbox_yaserde::__xml::attribute::OwnedAttribute>,
+        mut source_namespace: ::ofdbox_yaserde::__xml::namespace::Namespace,
       ) -> ::std::result::Result<
-        (::std::vec::Vec<::yaserde::__xml::attribute::OwnedAttribute>, ::yaserde::__xml::namespace::Namespace),
-        ::yaserde::Error
+        (::std::vec::Vec<::ofdbox_yaserde::__xml::attribute::OwnedAttribute>, ::ofdbox_yaserde::__xml::namespace::Namespace),
+        ::ofdbox_yaserde::Error
       > {
-        let mut child_attributes = ::std::vec::Vec::<::yaserde::__xml::attribute::OwnedAttribute>::new();
-        let mut child_attributes_namespace = ::yaserde::__xml::namespace::Namespace::empty();
+        let mut child_attributes = ::std::vec::Vec::<::ofdbox_yaserde::__xml::attribute::OwnedAttribute>::new();
+        let mut child_attributes_namespace = ::ofdbox_yaserde::__xml::namespace::Namespace::empty();
 
         let struct_start_event =
-          ::yaserde::__xml::writer::XmlEvent::start_element("temporary_element_to_generate_attributes")
+          ::ofdbox_yaserde::__xml::writer::XmlEvent::start_element("temporary_element_to_generate_attributes")
           #namespaces_definition;
 
         #append_attributes
-        let event: ::yaserde::__xml::writer::events::XmlEvent = struct_start_event.into();
+        let event: ::ofdbox_yaserde::__xml::writer::events::XmlEvent = struct_start_event.into();
 
-        if let ::yaserde::__xml::writer::events::XmlEvent::StartElement { attributes, namespace, .. } = event {
+        if let ::ofdbox_yaserde::__xml::writer::events::XmlEvent::StartElement { attributes, namespace, .. } = event {
           source_namespace.extend(&namespace.into_owned());
           source_namespace.extend(&child_attributes_namespace);
 
-          let a: ::std::vec::Vec<::yaserde::__xml::attribute::OwnedAttribute> =
+          let a: ::std::vec::Vec<::ofdbox_yaserde::__xml::attribute::OwnedAttribute> =
             attributes.into_owned().to_vec().iter().map(|k| k.to_owned()).collect();
           source_attributes.extend(a);
           source_attributes.extend(child_attributes);

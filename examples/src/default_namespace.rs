@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use yaserde::YaDeserialize;
+use ofdbox_yaserde::YaDeserialize;
 
 #[derive(YaDeserialize, Debug, PartialEq)]
 #[yaserde(rename = "EBMLSchema", prefix = "a", namespaces = {"a" = "some_namespace"})]
@@ -32,7 +32,7 @@ fn nested_element_equality() {
     </EBMLSchema>
   "#;
 
-  let parent: Schema = yaserde::de::from_str(parent).unwrap();
+  let parent: Schema = ofdbox_yaserde::de::from_str(parent).unwrap();
 
   let child = r#"
     <element xmlns="some_namespace">
@@ -40,7 +40,7 @@ fn nested_element_equality() {
     </element>
   "#;
 
-  let child: Element = yaserde::de::from_str(child).unwrap();
+  let child: Element = ofdbox_yaserde::de::from_str(child).unwrap();
 
   println!("{:#?}", child);
   println!("{:#?}", parent);

@@ -1,4 +1,4 @@
-use yaserde::{YaDeserialize, YaSerialize};
+use ofdbox_yaserde::{YaDeserialize, YaSerialize};
 
 #[derive(Debug, Default, PartialEq, YaSerialize, YaDeserialize)]
 #[yaserde(rename = "root", namespace = "http://www.ofdspec.org/2016", xmlns = { "ns" = "http://www.ofdspec.org/2016" })]
@@ -58,7 +58,7 @@ fn flattened_enum_variant_inherits_namespace() {
       }),
     }),
   };
-  let xml = yaserde::ser::to_string(&model).unwrap();
-  let parsed: Result<Root, _> = yaserde::de::from_str(&xml);
+  let xml = ofdbox_yaserde::ser::to_string(&model).unwrap();
+  let parsed: Result<Root, _> = ofdbox_yaserde::de::from_str(&xml);
   assert_eq!(parsed.map_err(|e| e.to_string()), Ok(model));
 }

@@ -1,4 +1,4 @@
-use yaserde_derive::{YaDeserialize, YaSerialize};
+use ofdbox_yaserde_derive::{YaDeserialize, YaSerialize};
 
 fn init() {
   let _ = env_logger::builder().is_test(true).try_init();
@@ -17,7 +17,7 @@ fn test_cdata_serialization() {
   let test_data = TestStruct {
     msgdata: "<tag>Some unescaped content</tag>".to_string(),
   };
-  let xml_output = yaserde::ser::to_string(&test_data).expect("Serialization failed");
+  let xml_output = ofdbox_yaserde::ser::to_string(&test_data).expect("Serialization failed");
   let expected_output = r#"<?xml version="1.0" encoding="UTF-8"?><teststruct><msgdata><![CDATA[<tag>Some unescaped content</tag>]]></msgdata></teststruct>"#;
   assert_eq!(xml_output, expected_output);
 }
@@ -26,7 +26,7 @@ fn test_cdata_serialization() {
 fn test_cdata_deserialization() {
   init();
   let xml = r#"<?xml version="1.0" encoding="utf-8"?><teststruct><msgdata><![CDATA[<tag>Some unescaped content</tag>]]></msgdata></teststruct>"#;
-  let r: TestStruct = yaserde::de::from_str(xml).unwrap();
+  let r: TestStruct = ofdbox_yaserde::de::from_str(xml).unwrap();
   let expected_output = TestStruct {
     msgdata: "<tag>Some unescaped content</tag>".to_string(),
   };

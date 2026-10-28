@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 // related to issue https://github.com/media-io/yaserde/issues/15
-use yaserde::*;
+use ofdbox_yaserde::*;
 
 #[derive(YaDeserialize, Debug, PartialEq)]
 #[yaserde(
@@ -83,8 +83,8 @@ struct Row {
 
 #[test]
 fn parsing_bbigras_namespace() {
+  use ofdbox_yaserde::de::from_str;
   use std::fs;
-  use yaserde::de::from_str;
 
   let filename = "tests/data/bbigras-namespace.xml";
 

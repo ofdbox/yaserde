@@ -1,7 +1,7 @@
 #[macro_use]
-extern crate yaserde;
+extern crate ofdbox_yaserde;
 #[macro_use]
-extern crate yaserde_derive;
+extern crate ofdbox_yaserde_derive;
 
 fn init() {
   let _ = env_logger::builder().is_test(true).try_init();
@@ -486,7 +486,8 @@ fn struct_bad_namespace() {
     </ns:book>
   "#;
 
-  let loaded: Result<Book, String> = yaserde::de::from_str(content).map_err(|e| e.to_string());
+  let loaded: Result<Book, String> =
+    ofdbox_yaserde::de::from_str(content).map_err(|e| e.to_string());
   assert_eq!(
     loaded,
     Err("bad namespace for book, found http://www.sample.com/ns/domain2".to_string())
@@ -618,7 +619,8 @@ fn struct_namespace_uri_rejects_wrong_namespace() {
     </ns:book>
   "#;
 
-  let loaded: Result<Book, String> = yaserde::de::from_str(content).map_err(|e| e.to_string());
+  let loaded: Result<Book, String> =
+    ofdbox_yaserde::de::from_str(content).map_err(|e| e.to_string());
   assert!(loaded.is_err(), "{loaded:?}");
 }
 
@@ -640,7 +642,8 @@ fn struct_namespace_uri_rejects_missing_namespace() {
   }
 
   let content = r#"<book><author>Antoine</author></book>"#;
-  let loaded: Result<Book, String> = yaserde::de::from_str(content).map_err(|e| e.to_string());
+  let loaded: Result<Book, String> =
+    ofdbox_yaserde::de::from_str(content).map_err(|e| e.to_string());
   assert!(loaded.is_err(), "{loaded:?}");
 }
 
@@ -983,8 +986,8 @@ fn enum_variant_inherits_namespace_for_nested_struct() {
       },
     }),
   };
-  let xml = yaserde::ser::to_string(&model).unwrap();
-  let parsed: Result<Root, _> = yaserde::de::from_str(&xml);
+  let xml = ofdbox_yaserde::ser::to_string(&model).unwrap();
+  let parsed: Result<Root, _> = ofdbox_yaserde::de::from_str(&xml);
   assert_eq!(parsed.map_err(|e| e.to_string()), Ok(model));
 }
 

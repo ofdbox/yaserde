@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 // related to issue https://github.com/media-io/yaserde/issues/3
-use yaserde::*;
+use ofdbox_yaserde::*;
 
 #[derive(Debug, Clone, PartialEq, YaDeserialize)]
 #[yaserde(rename = "layout")]
@@ -104,8 +104,8 @@ pub struct Midi {
 
 #[test]
 fn parsing_bbigras_namespace() {
+  use ofdbox_yaserde::de::from_str;
   use std::fs;
-  use yaserde::de::from_str;
 
   let filename = "tests/data/boscop.xml";
   let content = fs::read_to_string(filename).expect("something went wrong reading the file");

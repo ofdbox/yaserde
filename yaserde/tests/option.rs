@@ -1,7 +1,7 @@
 #[macro_use]
-extern crate yaserde;
+extern crate ofdbox_yaserde;
 #[macro_use]
-extern crate yaserde_derive;
+extern crate ofdbox_yaserde_derive;
 
 fn init() {
   let _ = env_logger::builder().is_test(true).try_init();
@@ -118,7 +118,8 @@ fn option_bool_no_crash_on_bad_input() {
   }
 
   let content = "<field><content>/<R/";
-  let result: Result<Test, String> = yaserde::de::from_str(content).map_err(|e| e.to_string());
+  let result: Result<Test, String> =
+    ofdbox_yaserde::de::from_str(content).map_err(|e| e.to_string());
 
   assert!(result.is_err());
 }
@@ -126,7 +127,7 @@ fn option_bool_no_crash_on_bad_input() {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use yaserde::de::from_str;
+  use ofdbox_yaserde::de::from_str;
 
   #[derive(Debug, YaDeserialize, YaSerialize)]
   pub struct Car {

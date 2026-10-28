@@ -107,21 +107,21 @@ pub fn parse(
         Some(quote! {
           #[allow(non_snake_case, non_camel_case_types)]
           struct #visitor_label;
-          impl<'de> ::yaserde::Visitor<'de> for #visitor_label {
+          impl<'de> ::ofdbox_yaserde::Visitor<'de> for #visitor_label {
             type Value = #struct_name;
 
             fn visit_str(
               self,
               v: &str,
-            ) -> ::std::result::Result<Self::Value, ::yaserde::Error> {
+            ) -> ::std::result::Result<Self::Value, ::ofdbox_yaserde::Error> {
               // `v` is already unescaped by the XML reader, escape it again before re-parsing
               let content = format!(
                 "{}{}{}",
                 #xml_opening,
-                ::yaserde::__xml::escape::escape_str_pcdata(v),
+                ::ofdbox_yaserde::__xml::escape::escape_str_pcdata(v),
                 #xml_closing,
               );
-              ::yaserde::de::from_str(&content)
+              ::ofdbox_yaserde::de::from_str(&content)
             }
           }
         })
@@ -145,14 +145,14 @@ pub fn parse(
         Some(quote! {
           #[allow(non_snake_case, non_camel_case_types)]
           struct #visitor_label;
-          impl<'de> ::yaserde::Visitor<'de> for #visitor_label {
+          impl<'de> ::ofdbox_yaserde::Visitor<'de> for #visitor_label {
             type Value = #field_type;
 
             fn #visitor(
               self,
               v: &str,
-            ) -> ::std::result::Result<Self::Value, ::yaserde::Error> {
-              #field_type::from_str(#map_if_bool).map_err(::yaserde::Error::custom)
+            ) -> ::std::result::Result<Self::Value, ::ofdbox_yaserde::Error> {
+              #field_type::from_str(#map_if_bool).map_err(::ofdbox_yaserde::Error::custom)
             }
           }
         })
@@ -199,9 +199,9 @@ pub fn parse(
       let visit_struct = |struct_name: syn::Path, action: TokenStream| {
         Some(quote! {
           #namespace_pattern => {
-            if let Ok(::yaserde::__xml::reader::XmlEvent::StartElement { .. }) = reader.peek() {
+            if let Ok(::ofdbox_yaserde::__xml::reader::XmlEvent::StartElement { .. }) = reader.peek() {
               // If substruct's start element found then deserialize substruct
-              let value = <#struct_name as ::yaserde::YaDeserialize>::deserialize(reader)?;
+              let value = <#struct_name as ::ofdbox_yaserde::YaDeserialize>::deserialize(reader)?;
               #value_label #action;
               // read EndElement
               let _event = reader.next_event()?;
@@ -280,14 +280,14 @@ pub fn parse(
 
       match field.get_type() {
         Field::FieldStruct { .. } => Ok(quote! {
-          #value_label = Some(::yaserde::de::from_str_with_namespace(
+          #value_label = Some(::ofdbox_yaserde::de::from_str_with_namespace(
             &unused_xml_elements,
             reader.current_namespace(),
           )?);
         }),
         Field::FieldOption { data_type } => match *data_type {
           Field::FieldStruct { .. } => Ok(quote! {
-            #value_label = ::yaserde::de::from_str_with_namespace(
+            #value_label = ::ofdbox_yaserde::de::from_str_with_namespace(
               &unused_xml_elements,
               reader.current_namespace(),
             )
@@ -453,7 +453,7 @@ pub fn parse(
         simple_type => {
           let type_token = TokenStream::from(simple_type);
           set_text(&quote! {
-            ::std::option::Option::Some(#type_token::from_str(text_content).map_err(::yaserde::Error::custom)?)
+            ::std::option::Option::Some(#type_token::from_str(text_content).map_err(::ofdbox_yaserde::Error::custom)?)
           })
         }
       }
@@ -485,7 +485,7 @@ pub fn parse(
               name
             );
 
-            quote! { #label: #value_label.ok_or_else(|| ::yaserde::Error::custom(#error))?, }
+            quote! { #label: #value_label.ok_or_else(|| ::ofdbox_yaserde::Error::custom(#error))?, }
           }
         }
       }
@@ -531,13 +531,13 @@ pub fn parse(
   let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
   Ok(quote! {
-    impl #impl_generics ::yaserde::YaDeserialize for #name #ty_generics #where_clause {
+    impl #impl_generics ::ofdbox_yaserde::YaDeserialize for #name #ty_generics #where_clause {
       #[allow(unused_variables)]
       fn deserialize<R: ::std::io::Read>(
-        reader: &mut ::yaserde::de::Deserializer<R>,
-      ) -> ::std::result::Result<Self, ::yaserde::Error> {
+        reader: &mut ::ofdbox_yaserde::de::Deserializer<R>,
+      ) -> ::std::result::Result<Self, ::ofdbox_yaserde::Error> {
         let (named_element, struct_namespace) =
-          if let ::yaserde::__xml::reader::XmlEvent::StartElement { name, .. } = reader.peek()?.to_owned() {
+          if let ::ofdbox_yaserde::__xml::reader::XmlEvent::StartElement { name, .. } = reader.peek()?.to_owned() {
             (name.local_name.to_owned(), name.namespace.clone())
           } else {
             (::std::string::String::from(#root), ::std::option::Option::None)
@@ -545,7 +545,7 @@ pub fn parse(
         let start_depth = reader.depth();
         #enter_namespace
         #enter_aliases
-        ::yaserde::__derive_debug!("Struct {} @ {}: start to parse {:?}", stringify!(#name), start_depth,
+        ::ofdbox_yaserde::__derive_debug!("Struct {} @ {}: start to parse {:?}", stringify!(#name), start_depth,
                named_element);
 
         if reader.depth() == 0 {
@@ -562,12 +562,12 @@ pub fn parse(
 
         loop {
           let event = reader.peek()?.to_owned();
-          ::yaserde::__derive_trace!(
+          ::ofdbox_yaserde::__derive_trace!(
             "Struct {} @ {}: matching {:?}",
             stringify!(#name), start_depth, event,
           );
           match event {
-            ::yaserde::__xml::reader::XmlEvent::StartElement{ref name, ref attributes, ..} => {
+            ::ofdbox_yaserde::__xml::reader::XmlEvent::StartElement{ref name, ref attributes, ..} => {
               let namespace = name.namespace.clone().unwrap_or_default();
               if first_element && !#flatten {
                 // Consume the struct's own element first: when it shares a name with a child element, it must
@@ -597,7 +597,7 @@ pub fn parse(
                 first_element = false;
               }
             }
-            ::yaserde::__xml::reader::XmlEvent::EndElement { ref name } => {
+            ::ofdbox_yaserde::__xml::reader::XmlEvent::EndElement { ref name } => {
               if name.local_name == named_element && reader.depth() == start_depth + 1 {
                 #write_unused
                 break;
@@ -605,25 +605,25 @@ pub fn parse(
               let event = reader.next_event()?;
               #write_unused
             }
-            ::yaserde::__xml::reader::XmlEvent::EndDocument => {
+            ::ofdbox_yaserde::__xml::reader::XmlEvent::EndDocument => {
               if #flatten {
                 break;
               }
             }
-            ::yaserde::__xml::reader::XmlEvent::Characters(ref text_content) => {
+            ::ofdbox_yaserde::__xml::reader::XmlEvent::Characters(ref text_content) => {
               #set_text
               let event = reader.next_event()?;
               #write_unused
             }
             event => {
-              return ::std::result::Result::Err(::yaserde::Error::custom(::std::format!("unknown event {:?}", event)));
+              return ::std::result::Result::Err(::ofdbox_yaserde::Error::custom(::std::format!("unknown event {:?}", event)));
             }
           }
         }
 
         #visit_unused
 
-        ::yaserde::__derive_debug!("Struct {} @ {}: success", stringify!(#name), start_depth);
+        ::ofdbox_yaserde::__derive_debug!("Struct {} @ {}: success", stringify!(#name), start_depth);
         #restore_namespace
         #restore_aliases
         ::std::result::Result::Ok(#name{#struct_builder})
@@ -664,14 +664,14 @@ fn build_call_visitor(
 
       let value = reader.read_inner_value::<#field_type, _>(|reader| {
         match reader.peek()? {
-          ::yaserde::__xml::reader::XmlEvent::Characters(s) => {
+          ::ofdbox_yaserde::__xml::reader::XmlEvent::Characters(s) => {
             let val = visitor.#visitor(&s);
             let _event = reader.next_event()?;
             val
           }
           // Empty element, e.g. `<field></field>` or `<field/>`
-          ::yaserde::__xml::reader::XmlEvent::EndElement { .. } => visitor.#visitor(""),
-          _ => ::std::result::Result::Err(::yaserde::Error::custom(::std::format!("unable to parse content for {}", #label_name))),
+          ::ofdbox_yaserde::__xml::reader::XmlEvent::EndElement { .. } => visitor.#visitor(""),
+          _ => ::std::result::Result::Err(::ofdbox_yaserde::Error::custom(::std::format!("unable to parse content for {}", #label_name))),
         }
       }).map_err(|e| e.in_field(#label_name))?;
 
@@ -690,7 +690,7 @@ fn build_code_for_unused_xml_events(
   (
     Some(quote! {
       let mut buf = ::std::vec![];
-      let mut writer = ::std::option::Option::Some(::yaserde::__xml::writer::EventWriter::new(&mut buf));
+      let mut writer = ::std::option::Option::Some(::ofdbox_yaserde::__xml::writer::EventWriter::new(&mut buf));
     }),
     Some(quote! {
       if let ::std::option::Option::Some(ref mut w) = writer {

@@ -17,14 +17,14 @@ fn enclose_xml_event(label_name: TokenStream, yaserde_format: TokenStream) -> To
   quote! {
     let yaserde_label_name = #label_name;
     let start_event =
-      ::yaserde::__xml::writer::XmlEvent::start_element(yaserde_label_name.as_str());
+      ::ofdbox_yaserde::__xml::writer::XmlEvent::start_element(yaserde_label_name.as_str());
     writer.write(start_event)?;
 
     let yaserde_value = #yaserde_format;
-    let data_event = ::yaserde::__xml::writer::XmlEvent::characters(&yaserde_value);
+    let data_event = ::ofdbox_yaserde::__xml::writer::XmlEvent::characters(&yaserde_value);
     writer.write(data_event)?;
 
-    let end_event = ::yaserde::__xml::writer::XmlEvent::end_element();
+    let end_event = ::ofdbox_yaserde::__xml::writer::XmlEvent::end_element();
     writer.write(end_event)?;
   }
 }

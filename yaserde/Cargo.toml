@@ -1,5 +1,5 @@
 [package]
-name = "yaserde"
+name = "ofdbox-yaserde"
 version = "0.13.1"
 authors = ["Marc-Antoine Arnaud <arnaud.marcantoine@gmail.com>"]
 description = "Serialization and deserialization library"
@@ -7,19 +7,19 @@ keywords = ["Serialization", "Deserialization", "XML"]
 license = "MIT"
 repository = "https://github.com/luminvent/yaserde"
 homepage = "https://github.com/luminvent/yaserde"
-documentation = "https://docs.rs/yaserde"
+documentation = "https://docs.rs/ofdbox-yaserde"
 readme = "../README.md"
 edition.workspace = true
 rust-version.workspace = true
 
 [features]
-derive = ["yaserde_derive"]
+derive = ["dep:ofdbox-yaserde-derive"]
 
 [dependencies]
-yaserde_derive = { version = "0.13.1", path = "../yaserde_derive", optional = true }
+ofdbox-yaserde-derive = { version = "0.13.1", path = "../yaserde_derive", optional = true }
 xml = "1.4.0"
 log = "0.4"
 
 [dev-dependencies]
 env_logger = "0.11.0"
-yaserde_derive = { version = "0.13.1", path = "../yaserde_derive" }
+ofdbox-yaserde-derive = { version = "0.13.1", path = "../yaserde_derive" }

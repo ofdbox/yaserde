@@ -1,10 +1,10 @@
 #[macro_use]
-extern crate yaserde;
+extern crate ofdbox_yaserde;
 #[macro_use]
-extern crate yaserde_derive;
+extern crate ofdbox_yaserde_derive;
 
+use ofdbox_yaserde::YaSerialize;
 use std::io::Write;
-use yaserde::YaSerialize;
 
 #[test]
 fn ser_basic() {
@@ -383,7 +383,10 @@ fn ser_custom() {
   }
 
   impl YaSerialize for Day {
-    fn serialize<W: Write>(&self, writer: &mut yaserde::ser::Serializer<W>) -> yaserde::Result<()> {
+    fn serialize<W: Write>(
+      &self,
+      writer: &mut ofdbox_yaserde::ser::Serializer<W>,
+    ) -> ofdbox_yaserde::Result<()> {
       writer.write(xml::writer::XmlEvent::start_element("DoubleDay"))?;
       writer.write(xml::writer::XmlEvent::characters(
         &(self.value * 2).to_string(),
@@ -396,7 +399,7 @@ fn ser_custom() {
       &self,
       attributes: Vec<xml::attribute::OwnedAttribute>,
       namespace: xml::namespace::Namespace,
-    ) -> yaserde::Result<(
+    ) -> ofdbox_yaserde::Result<(
       Vec<xml::attribute::OwnedAttribute>,
       xml::namespace::Namespace,
     )> {
@@ -523,7 +526,7 @@ fn ser_option_vec_complex() {
     ]),
   };
 
-  let content = yaserde::ser::to_string(&model).unwrap();
+  let content = ofdbox_yaserde::ser::to_string(&model).unwrap();
   assert_eq!(
     content,
     "<?xml version=\"1.0\" encoding=\"UTF-8\"?><String><Start value=\"First string\" /><Start value=\"Second string\" /><Start value=\"Third string\" /></String>"
@@ -531,7 +534,7 @@ fn ser_option_vec_complex() {
 
   // Test serialization with None
   let model_none = StringStruct { start: None };
-  let content_none = yaserde::ser::to_string(&model_none).unwrap();
+  let content_none = ofdbox_yaserde::ser::to_string(&model_none).unwrap();
   assert_eq!(
     content_none,
     "<?xml version=\"1.0\" encoding=\"UTF-8\"?><String />"
@@ -541,7 +544,7 @@ fn ser_option_vec_complex() {
   let model_empty = StringStruct {
     start: Some(vec![]),
   };
-  let content_empty = yaserde::ser::to_string(&model_empty).unwrap();
+  let content_empty = ofdbox_yaserde::ser::to_string(&model_empty).unwrap();
   assert_eq!(
     content_empty,
     "<?xml version=\"1.0\" encoding=\"UTF-8\"?><String />"

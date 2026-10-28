@@ -1,12 +1,12 @@
 #[macro_use]
-extern crate yaserde;
+extern crate ofdbox_yaserde;
 #[macro_use]
-extern crate yaserde_derive;
+extern crate ofdbox_yaserde_derive;
 
 use log::debug;
+use ofdbox_yaserde::YaDeserialize;
+use ofdbox_yaserde::de::from_str;
 use std::io::Read;
-use yaserde::YaDeserialize;
-use yaserde::de::from_str;
 
 fn init() {
   let _ = env_logger::builder().is_test(true).try_init();
@@ -244,7 +244,9 @@ fn de_attributes_custom_deserializer() {
     }
 
     impl YaDeserialize for Attributes {
-      fn deserialize<R: Read>(reader: &mut yaserde::de::Deserializer<R>) -> yaserde::Result<Self> {
+      fn deserialize<R: Read>(
+        reader: &mut ofdbox_yaserde::de::Deserializer<R>,
+      ) -> ofdbox_yaserde::Result<Self> {
         loop {
           match reader.next_event()? {
             XmlEvent::StartElement { .. } => {}
@@ -261,7 +263,7 @@ fn de_attributes_custom_deserializer() {
           }
         }
 
-        Err(yaserde::Error::custom("Unable to parse attribute"))
+        Err(ofdbox_yaserde::Error::custom("Unable to parse attribute"))
       }
     }
   }
@@ -806,28 +808,30 @@ fn de_custom() {
   }
 
   impl YaDeserialize for Day {
-    fn deserialize<R: Read>(reader: &mut yaserde::de::Deserializer<R>) -> yaserde::Result<Self> {
+    fn deserialize<R: Read>(
+      reader: &mut ofdbox_yaserde::de::Deserializer<R>,
+    ) -> ofdbox_yaserde::Result<Self> {
       use std::str::FromStr;
 
       if let xml::reader::XmlEvent::StartElement { name, .. } = reader.peek()?.to_owned() {
         let expected_name = "Day".to_owned();
         if name.local_name != expected_name {
-          return Err(yaserde::Error::custom(format!(
+          return Err(ofdbox_yaserde::Error::custom(format!(
             "Wrong StartElement name: {}, expected: {}",
             name, expected_name
           )));
         }
         let _next = reader.next_event();
       } else {
-        return Err(yaserde::Error::custom("StartElement missing"));
+        return Err(ofdbox_yaserde::Error::custom("StartElement missing"));
       }
 
       if let xml::reader::XmlEvent::Characters(text) = reader.peek()?.to_owned() {
         Ok(Day {
-          value: 2 * i32::from_str(&text).map_err(yaserde::Error::custom)?,
+          value: 2 * i32::from_str(&text).map_err(ofdbox_yaserde::Error::custom)?,
         })
       } else {
-        Err(yaserde::Error::custom("Characters missing"))
+        Err(ofdbox_yaserde::Error::custom("Characters missing"))
       }
     }
   }

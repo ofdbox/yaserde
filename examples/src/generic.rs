@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use yaserde::*;
+use ofdbox_yaserde::*;
 
 #[derive(YaSerialize, YaDeserialize, Debug, Default, Clone, Eq, PartialEq)]
 pub struct Header {}

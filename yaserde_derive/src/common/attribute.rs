@@ -288,7 +288,7 @@ impl YaSerdeAttribute {
               #element_name,
               namespace.as_str()
             );
-            return ::std::result::Result::Err(::yaserde::Error::custom(msg));
+            return ::std::result::Result::Err(::ofdbox_yaserde::Error::custom(msg));
           }
           ::std::option::Option::None => {
             let msg = ::std::format!(
@@ -296,7 +296,7 @@ impl YaSerdeAttribute {
               #element_name,
               #canonical
             );
-            return ::std::result::Result::Err(::yaserde::Error::custom(msg));
+            return ::std::result::Result::Err(::ofdbox_yaserde::Error::custom(msg));
           }
         }
       );
@@ -314,14 +314,14 @@ impl YaSerdeAttribute {
               #element_name,
               actual.as_str()
             );
-            return ::std::result::Result::Err(::yaserde::Error::custom(msg));
+            return ::std::result::Result::Err(::ofdbox_yaserde::Error::custom(msg));
           }
           (_, ::std::option::Option::None) => {
             let msg = ::std::format!(
               "missing namespace for {}",
               #element_name
             );
-            return ::std::result::Result::Err(::yaserde::Error::custom(msg));
+            return ::std::result::Result::Err(::ofdbox_yaserde::Error::custom(msg));
           }
         }
       );
@@ -352,7 +352,7 @@ impl YaSerdeAttribute {
           bad_namespace => {
             let msg =
               ::std::format!("bad namespace for {}, found {}", #element_name, bad_namespace);
-            return Err(::yaserde::Error::custom(msg));
+            return Err(::ofdbox_yaserde::Error::custom(msg));
           }
         }
       }

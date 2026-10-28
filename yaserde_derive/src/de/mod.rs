@@ -35,7 +35,7 @@ pub fn expand_derive_deserialize(ast: &syn::DeriveInput) -> syn::Result<TokenStr
     #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
     const _: () = {
       use ::std::str::FromStr as _;
-      use ::yaserde::Visitor as _;
+      use ::ofdbox_yaserde::Visitor as _;
 
       #impl_block
     };

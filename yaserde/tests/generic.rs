@@ -1,7 +1,7 @@
 #[macro_use]
-extern crate yaserde;
+extern crate ofdbox_yaserde;
 
-use yaserde::{YaDeserialize, YaSerialize};
+use ofdbox_yaserde::{YaDeserialize, YaSerialize};
 
 fn init() {
   let _ = env_logger::builder().is_test(true).try_init();
@@ -37,6 +37,6 @@ fn generic() {
 
   log::debug!("deserialize_and_validate @ {}:{}", file!(), line!());
   let loaded: Result<Base<Generic>, String> =
-    yaserde::de::from_str(content).map_err(|e| e.to_string());
+    ofdbox_yaserde::de::from_str(content).map_err(|e| e.to_string());
   assert_eq!(loaded, Ok(model));
 }

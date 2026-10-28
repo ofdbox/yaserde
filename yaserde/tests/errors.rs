@@ -1,7 +1,7 @@
 #[macro_use]
-extern crate yaserde_derive;
+extern crate ofdbox_yaserde_derive;
 
-use yaserde::de::from_str;
+use ofdbox_yaserde::de::from_str;
 
 fn init() {
   let _ = env_logger::builder().is_test(true).try_init();
@@ -20,7 +20,7 @@ fn de_no_content() {
 
   let content = "";
   let error = from_str::<Book>(content).unwrap_err();
-  assert!(matches!(error, yaserde::Error::Reader(_)));
+  assert!(matches!(error, ofdbox_yaserde::Error::Reader(_)));
   assert_eq!(
     error.to_string(),
     "1:1 Unexpected end of stream: no root element found"
@@ -57,7 +57,7 @@ fn de_invalid_value() {
   }
 
   let error = from_str::<Data>("<data><required>abc</required></data>").unwrap_err();
-  assert!(matches!(&error, yaserde::Error::Field { name, .. } if name == "required"));
+  assert!(matches!(&error, ofdbox_yaserde::Error::Field { name, .. } if name == "required"));
   assert_eq!(error.to_string(), "required: invalid digit found in string");
 }
 

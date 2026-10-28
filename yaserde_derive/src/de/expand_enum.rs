@@ -43,7 +43,7 @@ pub fn parse(
       attributes
         .iter()
         .find(|attr| attr.name.local_name.as_str() == #tag)
-        .ok_or_else(|| ::yaserde::Error::custom(format!("Expected enum tagged with {}, found {:?}", #tag, event)))?
+        .ok_or_else(|| ::ofdbox_yaserde::Error::custom(format!("Expected enum tagged with {}, found {:?}", #tag, event)))?
         .value.as_str()
     }
   } else {
@@ -53,13 +53,13 @@ pub fn parse(
   };
 
   Ok(quote! {
-    impl #impl_generics ::yaserde::YaDeserialize for #name #ty_generics #where_clause {
+    impl #impl_generics ::ofdbox_yaserde::YaDeserialize for #name #ty_generics #where_clause {
       #[allow(unused_variables)]
       fn deserialize<R: ::std::io::Read>(
-        reader: &mut ::yaserde::de::Deserializer<R>,
-      ) -> ::std::result::Result<Self, ::yaserde::Error> {
+        reader: &mut ::ofdbox_yaserde::de::Deserializer<R>,
+      ) -> ::std::result::Result<Self, ::ofdbox_yaserde::Error> {
         let (named_element, enum_namespace) =
-          if let ::yaserde::__xml::reader::XmlEvent::StartElement{ name, .. } = reader.peek()?.to_owned() {
+          if let ::ofdbox_yaserde::__xml::reader::XmlEvent::StartElement{ name, .. } = reader.peek()?.to_owned() {
             (name.local_name.to_owned(), name.namespace.clone())
           } else {
             (::std::string::String::from(#root), ::std::option::Option::None)
@@ -67,7 +67,7 @@ pub fn parse(
 
         let start_depth = reader.depth();
         #enter_namespace
-        ::yaserde::__derive_debug!("Enum {} @ {}: start to parse {:?}", stringify!(#name), start_depth, named_element);
+        ::ofdbox_yaserde::__derive_debug!("Enum {} @ {}: start to parse {:?}", stringify!(#name), start_depth, named_element);
 
         #namespaces_matching
 
@@ -76,9 +76,9 @@ pub fn parse(
 
         loop {
           let event = reader.peek()?.to_owned();
-          ::yaserde::__derive_trace!("Enum {} @ {}: matching {:?}", stringify!(#name), start_depth, event);
+          ::ofdbox_yaserde::__derive_trace!("Enum {} @ {}: matching {:?}", stringify!(#name), start_depth, event);
           match event {
-            ::yaserde::__xml::reader::XmlEvent::StartElement { ref name, ref attributes, .. } => {
+            ::ofdbox_yaserde::__xml::reader::XmlEvent::StartElement { ref name, ref attributes, .. } => {
               match #element_name {
                 #match_to_enum
                 _named_element => {
@@ -86,38 +86,38 @@ pub fn parse(
                 }
               }
 
-              if let ::yaserde::__xml::reader::XmlEvent::Characters(content) = reader.peek()?.to_owned() {
+              if let ::ofdbox_yaserde::__xml::reader::XmlEvent::Characters(content) = reader.peek()?.to_owned() {
                 match content.as_str() {
                   #match_to_enum
                   _ => {}
                 }
               }
             }
-            ::yaserde::__xml::reader::XmlEvent::EndElement { ref name } => {
+            ::ofdbox_yaserde::__xml::reader::XmlEvent::EndElement { ref name } => {
               if name.local_name == named_element && reader.depth() == start_depth + 1 {
                 break;
               }
               let _root = reader.next_event();
             }
-            ::yaserde::__xml::reader::XmlEvent::Characters(ref text_content) => {
+            ::ofdbox_yaserde::__xml::reader::XmlEvent::Characters(ref text_content) => {
               let _root = reader.next_event();
             }
-            ::yaserde::__xml::reader::XmlEvent::EndDocument => {
+            ::ofdbox_yaserde::__xml::reader::XmlEvent::EndDocument => {
               if #flatten {
                 break;
               }
 
               return ::std::result::Result::Err(
-                ::yaserde::Error::custom(::std::format!("End of document, missing some content ?")),
+                ::ofdbox_yaserde::Error::custom(::std::format!("End of document, missing some content ?")),
               );
             }
             event => {
-              return ::std::result::Result::Err(::yaserde::Error::custom(::std::format!("unknown event {:?}", event)))
+              return ::std::result::Result::Err(::ofdbox_yaserde::Error::custom(::std::format!("unknown event {:?}", event)))
             }
           }
         }
 
-        ::yaserde::__derive_debug!("Enum {} @ {}: success", stringify!(#name), start_depth);
+        ::ofdbox_yaserde::__derive_debug!("Enum {} @ {}: success", stringify!(#name), start_depth);
         #restore_namespace
         ::std::result::Result::Ok(enum_value.unwrap_or(<#name as ::std::default::Default>::default()))
       }
@@ -175,13 +175,13 @@ fn build_unnamed_field_visitors(fields: &syn::FieldsUnnamed) -> syn::Result<Toke
         quote! {
           #[allow(non_snake_case, non_camel_case_types)]
           struct #visitor_label;
-          impl<'de> ::yaserde::Visitor<'de> for #visitor_label {
+          impl<'de> ::ofdbox_yaserde::Visitor<'de> for #visitor_label {
             type Value = #field_type;
 
             fn #visitor(
               self,
               v: &str,
-            ) -> ::std::result::Result<Self::Value, ::yaserde::Error> {
+            ) -> ::std::result::Result<Self::Value, ::ofdbox_yaserde::Error> {
               #fn_body
             }
           }
@@ -195,7 +195,7 @@ fn build_unnamed_field_visitors(fields: &syn::FieldsUnnamed) -> syn::Result<Toke
         make_visitor(
           &visitor,
           &field_type,
-          &quote! { #field_type::from_str(v).map_err(::yaserde::Error::custom) },
+          &quote! { #field_type::from_str(v).map_err(::ofdbox_yaserde::Error::custom) },
         )
       };
 
@@ -214,12 +214,12 @@ fn build_unnamed_field_visitors(fields: &syn::FieldsUnnamed) -> syn::Result<Toke
               let content = "<".to_string()
                 + #struct_id
                 + ">"
-                + &::yaserde::__xml::escape::escape_str_pcdata(v)
+                + &::ofdbox_yaserde::__xml::escape::escape_str_pcdata(v)
                 + "</"
                 + #struct_id
                 + ">";
-              let value: ::std::result::Result<#struct_name, ::yaserde::Error> =
-                ::yaserde::de::from_str(&content);
+              let value: ::std::result::Result<#struct_name, ::ofdbox_yaserde::Error> =
+                ::ofdbox_yaserde::de::from_str(&content);
               value
             },
           ))
@@ -259,15 +259,15 @@ fn build_unnamed_visitor_calls(
           let visitor = #visitor_label{};
 
           let value = reader.read_inner_value::<#field_type, _>(|reader| {
-            if let ::yaserde::__xml::reader::XmlEvent::EndElement { .. } = *reader.peek()? {
+            if let ::ofdbox_yaserde::__xml::reader::XmlEvent::EndElement { .. } = *reader.peek()? {
               return visitor.#visitor("");
             }
 
-            if let ::yaserde::__xml::reader::XmlEvent::Characters(s) = reader.next_event()? {
+            if let ::ofdbox_yaserde::__xml::reader::XmlEvent::Characters(s) = reader.next_event()? {
               visitor.#visitor(&s)
             } else {
               ::std::result::Result::Err(
-                ::yaserde::Error::custom(::std::format!("unable to parse content for {}", #label_name)),
+                ::ofdbox_yaserde::Error::custom(::std::format!("unable to parse content for {}", #label_name)),
               )
             }
           })?;
@@ -278,7 +278,7 @@ fn build_unnamed_visitor_calls(
 
       let call_struct_visitor = |struct_name, action| {
         Some(quote! {
-          match <#struct_name as ::yaserde::YaDeserialize>::deserialize(reader) {
+          match <#struct_name as ::ofdbox_yaserde::YaDeserialize>::deserialize(reader) {
             Ok(value) => {
               #action;
               let _root = reader.next_event();
@@ -302,7 +302,7 @@ fn build_unnamed_visitor_calls(
             #variant_name(v) => v.push(value),
             _ => {
               return ::std::result::Result::Err(
-                ::yaserde::Error::custom("Got sequence of different types"),
+                ::ofdbox_yaserde::Error::custom("Got sequence of different types"),
               );
             }
           }

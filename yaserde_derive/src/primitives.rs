@@ -13,12 +13,12 @@ pub fn primitive_yaserde(input: TokenStream) -> TokenStream {
   let struct_name_literal = &ast.ident.to_string();
 
   let serde = quote! {
-      impl ::yaserde::YaSerialize for #struct_name {
+      impl ::ofdbox_yaserde::YaSerialize for #struct_name {
           fn serialize<W: ::std::io::Write>(
               &self,
-              writer: &mut ::yaserde::ser::Serializer<W>,
-          ) -> ::std::result::Result<(), ::yaserde::Error> {
-            ::yaserde::primitives::serialize_primitives(
+              writer: &mut ::ofdbox_yaserde::ser::Serializer<W>,
+          ) -> ::std::result::Result<(), ::ofdbox_yaserde::Error> {
+            ::ofdbox_yaserde::primitives::serialize_primitives(
                   self,
                   #struct_name_literal,
                   writer, |s| s.to_string(),
@@ -27,26 +27,26 @@ pub fn primitive_yaserde(input: TokenStream) -> TokenStream {
 
           fn serialize_attributes(
               &self,
-              attributes: ::std::vec::Vec<::yaserde::__xml::attribute::OwnedAttribute>,
-              namespace: ::yaserde::__xml::namespace::Namespace,
+              attributes: ::std::vec::Vec<::ofdbox_yaserde::__xml::attribute::OwnedAttribute>,
+              namespace: ::ofdbox_yaserde::__xml::namespace::Namespace,
           ) -> ::std::result::Result<
               (
-                  ::std::vec::Vec<::yaserde::__xml::attribute::OwnedAttribute>,
-                  ::yaserde::__xml::namespace::Namespace,
+                  ::std::vec::Vec<::ofdbox_yaserde::__xml::attribute::OwnedAttribute>,
+                  ::ofdbox_yaserde::__xml::namespace::Namespace,
               ),
-              ::yaserde::Error,
+              ::ofdbox_yaserde::Error,
           > {
               Ok((attributes, namespace))
           }
       }
 
-      impl ::yaserde::YaDeserialize for #struct_name {
+      impl ::ofdbox_yaserde::YaDeserialize for #struct_name {
           fn deserialize<R: ::std::io::Read>(
-              reader: &mut ::yaserde::de::Deserializer<R>,
-          ) -> ::std::result::Result<Self, ::yaserde::Error> {
-              ::yaserde::primitives::deserialize_primitives(
+              reader: &mut ::ofdbox_yaserde::de::Deserializer<R>,
+          ) -> ::std::result::Result<Self, ::ofdbox_yaserde::Error> {
+              ::ofdbox_yaserde::primitives::deserialize_primitives(
                   reader,
-                  |s| <#struct_name as ::std::str::FromStr>::from_str(s).map_err(::yaserde::Error::custom),
+                  |s| <#struct_name as ::std::str::FromStr>::from_str(s).map_err(::ofdbox_yaserde::Error::custom),
               )
           }
       }

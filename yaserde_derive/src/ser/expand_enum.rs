@@ -33,8 +33,8 @@ pub fn serialize(
         quote! {
           match self {
             #name::#label { .. } => {
-              let tag = ::yaserde::__xml::name::OwnedName::local(#tag);
-              child_attributes.push(::yaserde::__xml::attribute::OwnedAttribute::new(tag, #element_name));
+              let tag = ::ofdbox_yaserde::__xml::name::OwnedName::local(#tag);
+              child_attributes.push(::ofdbox_yaserde::__xml::attribute::OwnedAttribute::new(tag, #element_name));
             }
             _ => {}
           }
@@ -135,7 +135,7 @@ fn inner_enum_inspector(
               #name::#label => {
                 let yaserde_label_name = #label_name;
                 let data_event =
-                  ::yaserde::__xml::writer::XmlEvent::characters(yaserde_label_name.as_str());
+                  ::ofdbox_yaserde::__xml::writer::XmlEvent::characters(yaserde_label_name.as_str());
                 writer.write(data_event)?;
               }
             }
@@ -152,7 +152,7 @@ fn inner_enum_inspector(
 
               if field.is_text_content() {
                 return Some(quote!(
-                  let data_event = ::yaserde::__xml::writer::XmlEvent::characters(&self.#field_label);
+                  let data_event = ::ofdbox_yaserde::__xml::writer::XmlEvent::characters(&self.#field_label);
                   writer.write(data_event)?;
                 ));
               }
@@ -177,14 +177,14 @@ fn inner_enum_inspector(
                       &#name::#label { ref #field_label, .. } => {
                         let yaserde_label_name = #field_label_name;
                         let struct_start_event =
-                          ::yaserde::__xml::writer::XmlEvent::start_element(yaserde_label_name.as_str());
+                          ::ofdbox_yaserde::__xml::writer::XmlEvent::start_element(yaserde_label_name.as_str());
                         writer.write(struct_start_event)?;
 
                         let string_value = #field_label.to_string();
-                        let data_event = ::yaserde::__xml::writer::XmlEvent::characters(&string_value);
+                        let data_event = ::ofdbox_yaserde::__xml::writer::XmlEvent::characters(&string_value);
                         writer.write(data_event)?;
 
-                        let struct_end_event = ::yaserde::__xml::writer::XmlEvent::end_element();
+                        let struct_end_event = ::ofdbox_yaserde::__xml::writer::XmlEvent::end_element();
                         writer.write(struct_end_event)?;
                       },
                       _ => {},
@@ -198,7 +198,7 @@ fn inner_enum_inspector(
                         ::std::option::Option::Some(#field_label_name.to_string()),
                       );
                       writer.set_skip_start_end(false);
-                      ::yaserde::YaSerialize::serialize(#field_label, writer)?;
+                      ::ofdbox_yaserde::YaSerialize::serialize(#field_label, writer)?;
                     },
                     _ => {}
                   }
@@ -211,7 +211,7 @@ fn inner_enum_inspector(
                           ::std::option::Option::Some(#field_label_name.to_string()),
                         );
                         writer.set_skip_start_end(false);
-                        ::yaserde::YaSerialize::serialize(item, writer)?;
+                        ::ofdbox_yaserde::YaSerialize::serialize(item, writer)?;
                       }
                     },
                     _ => {}
@@ -239,31 +239,31 @@ fn inner_enum_inspector(
                 quote! {
                   let yaserde_label_name = #label_name;
                   let struct_start_event =
-                    ::yaserde::__xml::writer::XmlEvent::start_element(yaserde_label_name.as_str());
+                    ::ofdbox_yaserde::__xml::writer::XmlEvent::start_element(yaserde_label_name.as_str());
                   writer.write(struct_start_event)?;
 
                   #action
 
-                  let struct_end_event = ::yaserde::__xml::writer::XmlEvent::end_element();
+                  let struct_end_event = ::ofdbox_yaserde::__xml::writer::XmlEvent::end_element();
                   writer.write(struct_end_event)?;
                 }
               };
 
               let write_string_chars = quote! {
-                let data_event = ::yaserde::__xml::writer::XmlEvent::characters(item);
+                let data_event = ::ofdbox_yaserde::__xml::writer::XmlEvent::characters(item);
                 writer.write(data_event)?;
               };
 
               let write_simple_type = write_element(&quote! {
                 let s = item.to_string();
-                let data_event = ::yaserde::__xml::writer::XmlEvent::characters(&s);
+                let data_event = ::ofdbox_yaserde::__xml::writer::XmlEvent::characters(&s);
                 writer.write(data_event)?;
               });
 
               let serialize = quote! {
                 writer.set_start_event_name(::std::option::Option::None);
                 writer.set_skip_start_end(true);
-                ::yaserde::YaSerialize::serialize(item, writer)?;
+                ::ofdbox_yaserde::YaSerialize::serialize(item, writer)?;
               };
 
               let write_sub_type = |data_type| {
@@ -305,14 +305,14 @@ fn inner_enum_inspector(
                 }
                 Field::FieldStruct { .. } => {
                   if variant_attrs.flatten || field.is_flatten() {
-                     match_field(&quote!{ ::yaserde::YaSerialize::serialize(item, writer)?})
+                     match_field(&quote!{ ::ofdbox_yaserde::YaSerialize::serialize(item, writer)?})
                    } else {
                      match_field(&quote! {
                        writer.set_start_event_name(
                          ::std::option::Option::Some(#label_name.to_string()),
                        );
                        writer.set_skip_start_end(false);
-                       ::yaserde::YaSerialize::serialize(item, writer)?;
+                       ::ofdbox_yaserde::YaSerialize::serialize(item, writer)?;
                      })
                    }
                 }
