@@ -1028,3 +1028,41 @@ fn child_can_declare_local_namespace() {
   serialize_and_validate!(model, content);
   deserialize_and_validate!(content, model, Root);
 }
+
+#[test]
+fn flattened_struct_inherits_namespace_and_attributes() {
+  init();
+
+  #[derive(Debug, PartialEq, YaSerialize, YaDeserialize)]
+  struct Common {
+    #[yaserde(attribute = true, rename = "ID")]
+    id: String,
+    #[yaserde(rename = "Value")]
+    value: String,
+  }
+
+  #[derive(Debug, PartialEq, YaSerialize, YaDeserialize)]
+  #[yaserde(
+    rename = "root",
+    namespace = "http://www.sample.com/ns/domain",
+    xmlns = {
+      "ns" = "http://www.sample.com/ns/domain"
+    }
+  )]
+  struct Root {
+    #[yaserde(flatten = true)]
+    common: Common,
+  }
+
+  let content = r#"<ns:root xmlns:ns="http://www.sample.com/ns/domain" ID="1"><ns:Value>ok</ns:Value></ns:root>"#;
+
+  let model = Root {
+    common: Common {
+      id: "1".to_owned(),
+      value: "ok".to_owned(),
+    },
+  };
+
+  serialize_and_validate!(model, content);
+  deserialize_and_validate!(content, model, Root);
+}
