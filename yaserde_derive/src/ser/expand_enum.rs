@@ -124,7 +124,7 @@ fn inner_enum_inspector(
       let variant_attrs = YaSerdeAttribute::from(&variant.attrs);
 
       let label = &variant.ident;
-      let label_name = build_label_name(label, &variant_attrs, &root_attributes.default_namespace);
+      let label_name = build_label_name(label, &variant_attrs, root_attributes);
 
       match variant.fields {
         Fields::Unit => {

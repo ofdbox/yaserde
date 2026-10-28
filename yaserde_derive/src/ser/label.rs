@@ -4,15 +4,21 @@ use proc_macro2::Ident;
 pub fn build_label_name(
   label: &Ident,
   field_attrs: &YaSerdeAttribute,
-  default_namespace: &Option<String>,
+  root_attributes: &YaSerdeAttribute,
 ) -> String {
-  let prefix = if default_namespace == &field_attrs.prefix {
+  let prefix = if let Some(namespace) = &field_attrs.namespace {
+    root_attributes
+      .namespaces
+      .iter()
+      .find_map(|(prefix, uri)| (uri == namespace).then(|| prefix.clone()))
+  } else {
+    field_attrs.prefix.clone()
+  };
+
+  let prefix = if root_attributes.default_namespace == prefix {
     "".to_string()
   } else {
-    field_attrs
-      .prefix
-      .clone()
-      .map_or("".to_string(), |prefix| prefix + ":")
+    prefix.map_or("".to_string(), |prefix| prefix + ":")
   };
 
   let label = field_attrs

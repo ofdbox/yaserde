@@ -13,6 +13,7 @@ pub fn parse(
 ) -> syn::Result<TokenStream> {
   let namespaces_matching = root_attributes.get_namespace_matching(
     &None,
+    root_attributes.namespace.as_deref(),
     quote!(struct_namespace),
     quote!(named_element),
     true,
@@ -603,10 +604,11 @@ fn build_call_visitor(
     quote!(name.local_name.as_str()),
   );
 
-  let namespace = field.prefix_namespace(root_attributes);
+  let namespaces = field.namespace_values(root_attributes);
+  let namespace_pattern = quote!(#(#namespaces)|*);
 
   Some(quote! {
-    (#namespace, #label_name) => {
+    (#namespace_pattern, #label_name) => {
       let visitor = #visitor_label{};
 
       #namespaces_matching

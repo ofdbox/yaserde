@@ -65,14 +65,19 @@ impl YaSerdeField {
   }
 
   pub fn renamed_label(&self, root_attributes: &YaSerdeAttribute) -> String {
-    let prefix = if root_attributes.default_namespace == self.attributes.prefix {
+    let prefix = if let Some(namespace) = &self.attributes.namespace {
+      root_attributes
+        .namespaces
+        .iter()
+        .find_map(|(prefix, uri)| (uri == namespace).then(|| prefix.clone()))
+    } else {
+      self.attributes.prefix.clone()
+    };
+
+    let prefix = if root_attributes.default_namespace == prefix {
       "".to_string()
     } else {
-      self
-        .attributes
-        .prefix
-        .clone()
-        .map_or("".to_string(), |prefix| prefix + ":")
+      prefix.map_or("".to_string(), |prefix| prefix + ":")
     };
 
     let label = self.renamed_label_without_namespace();
@@ -149,6 +154,10 @@ impl YaSerdeField {
   }
 
   pub fn prefix_namespace(&self, root_attributes: &YaSerdeAttribute) -> String {
+    if let Some(namespace) = &self.attributes.namespace {
+      return namespace.clone();
+    }
+
     root_attributes
       .namespaces
       .iter()
@@ -162,6 +171,23 @@ impl YaSerdeField {
       .unwrap_or_default()
   }
 
+  pub fn namespace_values(&self, root_attributes: &YaSerdeAttribute) -> Vec<String> {
+    if let Some(namespace) = &self.attributes.namespace {
+      return vec![namespace.clone()];
+    }
+
+    let mut values = Vec::new();
+    for (prefix, namespace) in &root_attributes.namespaces {
+      if self.attributes.prefix.as_deref().eq(&Some(prefix.as_str())) {
+        values.push(namespace.clone());
+      }
+    }
+    if values.is_empty() {
+      values.push(String::new());
+    }
+    values
+  }
+
   pub fn get_namespace_matching(
     &self,
     root_attributes: &YaSerdeAttribute,
@@ -170,6 +196,7 @@ impl YaSerdeField {
   ) -> TokenStream {
     root_attributes.get_namespace_matching(
       &self.attributes.prefix,
+      self.attributes.namespace.as_deref(),
       element_namespace,
       element_name,
       false,

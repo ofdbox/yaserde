@@ -523,3 +523,123 @@ fn struct_default_namespace_no_prefix() {
   serialize_and_validate!(model, content);
   deserialize_and_validate!(content, model, Book);
 }
+
+#[test]
+fn struct_namespace_uri_without_field_prefix() {
+  init();
+
+  #[derive(Debug, PartialEq, YaDeserialize, YaSerialize)]
+  #[yaserde(
+    rename = "book",
+    prefix = "ns",
+    namespaces = {
+      "ns" = "http://www.sample.com/ns/domain"
+    }
+  )]
+  pub struct Book {
+    #[yaserde(namespace = "http://www.sample.com/ns/domain")]
+    author: String,
+    #[yaserde(namespace = "http://www.sample.com/ns/domain")]
+    title: String,
+  }
+
+  let content = r#"
+    <ns:book xmlns:ns="http://www.sample.com/ns/domain">
+      <ns:author>Antoine de Saint-Exupery</ns:author>
+      <ns:title>Little prince</ns:title>
+    </ns:book>
+  "#;
+
+  let model = Book {
+    author: "Antoine de Saint-Exupery".to_owned(),
+    title: "Little prince".to_owned(),
+  };
+
+  serialize_and_validate!(model, content);
+  deserialize_and_validate!(content, model, Book);
+}
+
+#[test]
+fn struct_default_namespace_uri_without_field_prefix() {
+  init();
+
+  #[derive(Debug, PartialEq, YaDeserialize, YaSerialize)]
+  #[yaserde(
+    rename = "book",
+    prefix = "ns",
+    default_namespace = "ns",
+    namespaces = {
+      "ns" = "http://www.sample.com/ns/domain"
+    }
+  )]
+  pub struct Book {
+    #[yaserde(namespace = "http://www.sample.com/ns/domain")]
+    author: String,
+    #[yaserde(namespace = "http://www.sample.com/ns/domain")]
+    title: String,
+  }
+
+  let content = r#"
+    <book xmlns="http://www.sample.com/ns/domain">
+      <author>Antoine de Saint-Exupery</author>
+      <title>Little prince</title>
+    </book>
+  "#;
+
+  let model = Book {
+    author: "Antoine de Saint-Exupery".to_owned(),
+    title: "Little prince".to_owned(),
+  };
+
+  serialize_and_validate!(model, content);
+  deserialize_and_validate!(content, model, Book);
+}
+
+#[test]
+fn struct_namespace_uri_rejects_wrong_namespace() {
+  init();
+
+  #[derive(Debug, PartialEq, YaDeserialize, YaSerialize)]
+  #[yaserde(
+    rename = "book",
+    prefix = "ns",
+    namespaces = {
+      "ns" = "http://www.sample.com/ns/domain"
+    }
+  )]
+  pub struct Book {
+    #[yaserde(namespace = "http://www.sample.com/ns/domain")]
+    author: String,
+  }
+
+  let content = r#"
+    <ns:book xmlns:ns="http://www.sample.com/ns/domain">
+      <wrong:author xmlns:wrong="http://www.sample.com/ns/wrong">Antoine</wrong:author>
+    </ns:book>
+  "#;
+
+  let loaded: Result<Book, String> = yaserde::de::from_str(content).map_err(|e| e.to_string());
+  assert!(loaded.is_err(), "{loaded:?}");
+}
+
+#[test]
+fn struct_namespace_uri_rejects_missing_namespace() {
+  init();
+
+  #[derive(Debug, PartialEq, YaDeserialize, YaSerialize)]
+  #[yaserde(
+    rename = "book",
+    prefix = "ns",
+    namespaces = {
+      "ns" = "http://www.sample.com/ns/domain"
+    }
+  )]
+  pub struct Book {
+    #[yaserde(namespace = "http://www.sample.com/ns/domain")]
+    author: String,
+  }
+
+  let content = r#"<book><author>Antoine</author></book>"#;
+  let loaded: Result<Book, String> = yaserde::de::from_str(content).map_err(|e| e.to_string());
+  assert!(loaded.is_err(), "{loaded:?}");
+}

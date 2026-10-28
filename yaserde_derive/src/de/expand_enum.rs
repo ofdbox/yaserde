@@ -12,6 +12,7 @@ pub fn parse(
 ) -> syn::Result<TokenStream> {
   let namespaces_matching = root_attributes.get_namespace_matching(
     &None,
+    root_attributes.namespace.as_deref(),
     quote!(enum_namespace),
     quote!(named_element),
     true,

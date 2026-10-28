@@ -19,6 +19,9 @@ pub struct YaSerdeAttribute {
   /// Flatten child fields
   #[serde(default)]
   pub flatten: bool,
+  /// Namespace URI of the current element.
+  #[serde(default)]
+  pub namespace: Option<String>,
   /// Declare all namespaces with prefix/URL
   #[serde(default)]
   pub namespaces: BTreeMap<String, String>,
@@ -103,6 +106,7 @@ impl YaSerdeAttribute {
       "default_namespace",
     )?;
     merge_bool(&mut self.flatten, other.flatten, "flatten")?;
+    merge_option(&mut self.namespace, other.namespace, "namespace")?;
     for (prefix, namespace) in other.namespaces {
       if self.namespaces.contains_key(&prefix) {
         return Err(format!("namespaces.{}", prefix));
@@ -131,24 +135,58 @@ impl YaSerdeAttribute {
     self.rename.clone().unwrap_or_else(|| ident.to_string())
   }
 
+  pub fn namespace_prefix(&self) -> Option<String> {
+    if let Some(namespace) = &self.namespace {
+      return self
+        .namespaces
+        .iter()
+        .find_map(|(prefix, uri)| (uri == namespace).then(|| prefix.clone()));
+    }
+    self.prefix.clone()
+  }
+
   pub fn prefix_namespace(&self) -> String {
-    if self.default_namespace == self.prefix {
+    let prefix = self.namespace_prefix();
+    if self.default_namespace == prefix {
       "".to_string()
     } else {
-      self
-        .clone()
-        .prefix
-        .map_or("".to_string(), |prefix| prefix + ":")
+      prefix.map_or("".to_string(), |prefix| prefix + ":")
     }
   }
 
   pub fn get_namespace_matching(
     &self,
     prefix: &Option<String>,
+    expected_namespace: Option<&str>,
     element_namespace: TokenStream,
     element_name: TokenStream,
     take_root_prefix: bool,
   ) -> TokenStream {
+    if let Some(expected_namespace) = expected_namespace {
+      return quote!(
+        match #element_namespace {
+          ::std::option::Option::Some(namespace)
+            if namespace.as_str() == #expected_namespace => {}
+          ::std::option::Option::Some(namespace) => {
+            let msg = ::std::format!(
+              "bad namespace for {}, found {}",
+              #element_name,
+              namespace.as_str()
+            );
+            return ::std::result::Result::Err(::yaserde::Error::custom(msg));
+          }
+          ::std::option::Option::None => {
+            let msg = ::std::format!(
+              "missing namespace for {}, expected {}",
+              #element_name,
+              #expected_namespace
+            );
+            return ::std::result::Result::Err(::yaserde::Error::custom(msg));
+          }
+        }
+      );
+    }
+
     let configured_prefix = if take_root_prefix {
       self.prefix.clone()
     } else {
