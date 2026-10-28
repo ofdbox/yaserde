@@ -22,6 +22,12 @@ pub struct YaSerdeAttribute {
   /// Namespace URI of the current element.
   #[serde(default)]
   pub namespace: Option<String>,
+  /// Preferred namespace declarations keyed by prefix.
+  #[serde(default)]
+  pub xmlns: BTreeMap<String, String>,
+  /// Default namespace URI for this element and its descendants.
+  #[serde(default)]
+  pub xmlns_default: Option<String>,
   /// Declare all namespaces with prefix/URL
   #[serde(default)]
   pub namespaces: BTreeMap<String, String>,
@@ -71,7 +77,62 @@ impl YaSerdeAttribute {
       })?;
     }
 
+    result.normalize_xmlns().map_err(|message| {
+      let span = attributes
+        .iter()
+        .find(|attr| attr.path().is_ident("yaserde"))
+        .map(syn::spanned::Spanned::span)
+        .unwrap_or_else(proc_macro2::Span::call_site);
+      syn::Error::new(span, message)
+    })?;
+
     Ok(result)
+  }
+
+  fn normalize_xmlns(&mut self) -> Result<(), String> {
+    for (prefix, namespace) in std::mem::take(&mut self.xmlns) {
+      if prefix.is_empty() {
+        return Err("xmlns key must not be empty; use xmlns_default".to_owned());
+      }
+      match self.namespaces.get(&prefix) {
+        Some(existing) if existing != &namespace => {
+          return Err(format!(
+            "xmlns prefix `{prefix}` is declared with conflicting namespaces"
+          ));
+        }
+        Some(_) => {}
+        None => {
+          self.namespaces.insert(prefix, namespace);
+        }
+      }
+    }
+
+    if let Some(namespace) = self.xmlns_default.take() {
+      let prefix = self
+        .namespaces
+        .iter()
+        .find_map(|(prefix, uri)| (uri == &namespace).then(|| prefix.clone()))
+        .unwrap_or_else(|| {
+          let mut prefix = "__default".to_owned();
+          let mut index = 1;
+          while self.namespaces.contains_key(&prefix) {
+            prefix = format!("__default_{index}");
+            index += 1;
+          }
+          self.namespaces.insert(prefix.clone(), namespace);
+          prefix
+        });
+
+      match &self.default_namespace {
+        Some(existing) if existing != &prefix => {
+          return Err("xmlns_default conflicts with default_namespace".to_owned());
+        }
+        Some(_) => {}
+        None => self.default_namespace = Some(prefix),
+      }
+    }
+
+    Ok(())
   }
 
   /// Merge `other` into `self`, returning the name of the first option set in both.
@@ -107,6 +168,17 @@ impl YaSerdeAttribute {
     )?;
     merge_bool(&mut self.flatten, other.flatten, "flatten")?;
     merge_option(&mut self.namespace, other.namespace, "namespace")?;
+    merge_option(
+      &mut self.xmlns_default,
+      other.xmlns_default,
+      "xmlns_default",
+    )?;
+    for (prefix, namespace) in other.xmlns {
+      if self.xmlns.contains_key(&prefix) {
+        return Err(format!("xmlns.{}", prefix));
+      }
+      self.xmlns.insert(prefix, namespace);
+    }
     for (prefix, namespace) in other.namespaces {
       if self.namespaces.contains_key(&prefix) {
         return Err(format!("namespaces.{}", prefix));

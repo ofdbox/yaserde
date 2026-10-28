@@ -173,3 +173,48 @@ fn primitive_on_named_struct() {
       .starts_with("`PrimitiveYaSerde` can only be derived for a newtype struct")
   );
 }
+
+#[test]
+fn xmlns_rejects_empty_prefix() {
+  let input = parse_quote! {
+    #[yaserde(xmlns = { "" = "http://a" })]
+    struct Data {
+      field: String,
+    }
+  };
+  assert_eq!(
+    serialize_error(input),
+    "xmlns key must not be empty; use xmlns_default"
+  );
+}
+
+#[test]
+fn xmlns_rejects_conflicting_namespace() {
+  let input = parse_quote! {
+    #[yaserde(
+      namespaces = { "ns" = "http://a" },
+      xmlns = { "ns" = "http://b" }
+    )]
+    struct Data {
+      field: String,
+    }
+  };
+  assert_eq!(
+    serialize_error(input),
+    "xmlns prefix `ns` is declared with conflicting namespaces"
+  );
+}
+
+#[test]
+fn xmlns_default_rejects_conflicting_default_prefix() {
+  let input = parse_quote! {
+    #[yaserde(
+      default_namespace = "ns",
+      xmlns_default = "http://a"
+    )]
+    struct Data {
+      field: String,
+    }
+  };
+  assert!(serialize_error(input).contains("xmlns_default conflicts"));
+}
