@@ -1,5 +1,5 @@
 use crate::common::{Field, YaSerdeAttribute, YaSerdeField};
-use crate::ser::{implement_serializer::implement_serializer, label::build_label_name};
+use crate::ser::{implement_serializer::implement_serializer, label::build_label_expr};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::Fields;
@@ -124,7 +124,7 @@ fn inner_enum_inspector(
       let variant_attrs = YaSerdeAttribute::from(&variant.attrs);
 
       let label = &variant.ident;
-      let label_name = build_label_name(label, &variant_attrs, root_attributes);
+      let label_name = build_label_expr(label, &variant_attrs, root_attributes);
 
       match variant.fields {
         Fields::Unit => {
@@ -133,7 +133,9 @@ fn inner_enum_inspector(
           } else {
             quote! {
               #name::#label => {
-                let data_event = ::yaserde::__xml::writer::XmlEvent::characters(#label_name);
+                let yaserde_label_name = #label_name;
+                let data_event =
+                  ::yaserde::__xml::writer::XmlEvent::characters(yaserde_label_name.as_str());
                 writer.write(data_event)?;
               }
             }
@@ -155,7 +157,7 @@ fn inner_enum_inspector(
                 ));
               }
 
-              let field_label_name = field.renamed_label(root_attributes);
+              let field_label_name = field.element_label_expr(root_attributes);
 
               match field.get_type() {
                 Field::FieldString
@@ -173,8 +175,9 @@ fn inner_enum_inspector(
                   quote! {
                     match self {
                       &#name::#label { ref #field_label, .. } => {
+                        let yaserde_label_name = #field_label_name;
                         let struct_start_event =
-                          ::yaserde::__xml::writer::XmlEvent::start_element(#field_label_name);
+                          ::yaserde::__xml::writer::XmlEvent::start_element(yaserde_label_name.as_str());
                         writer.write(struct_start_event)?;
 
                         let string_value = #field_label.to_string();
@@ -234,7 +237,9 @@ fn inner_enum_inspector(
             .map(|field| {
               let write_element = |action: &TokenStream| {
                 quote! {
-                  let struct_start_event = ::yaserde::__xml::writer::XmlEvent::start_element(#label_name);
+                  let yaserde_label_name = #label_name;
+                  let struct_start_event =
+                    ::yaserde::__xml::writer::XmlEvent::start_element(yaserde_label_name.as_str());
                   writer.write(struct_start_event)?;
 
                   #action
