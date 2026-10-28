@@ -13,8 +13,18 @@ pub fn from_str<T: YaDeserialize>(s: &str) -> Result<T> {
 
 /// Deserialize a string with an inherited namespace context.
 pub fn from_str_with_namespace<T: YaDeserialize>(s: &str, namespace: Option<&str>) -> Result<T> {
+  from_str_with_context(s, namespace, &::std::collections::BTreeMap::new())
+}
+
+/// Deserialize a string with inherited namespace and alias context.
+pub fn from_str_with_context<T: YaDeserialize>(
+  s: &str,
+  namespace: Option<&str>,
+  aliases: &::std::collections::BTreeMap<String, String>,
+) -> Result<T> {
   let mut deserializer = Deserializer::new_from_reader(s.as_bytes());
   deserializer.set_current_namespace(namespace.map(::std::string::ToString::to_string));
+  deserializer.set_namespace_aliases(aliases.clone());
   <T as YaDeserialize>::deserialize(&mut deserializer)
 }
 

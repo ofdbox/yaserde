@@ -304,11 +304,10 @@ impl YaSerdeAttribute {
 
     if self.namespaces.is_empty() {
       return quote!(
-        match (reader.current_namespace(), #element_namespace) {
-          (::std::option::Option::Some(current), ::std::option::Option::Some(actual))
-            if current == actual.as_str() => {}
-          (::std::option::Option::None, ::std::option::Option::None) => {}
-          (_, ::std::option::Option::Some(actual)) => {
+        match #element_namespace {
+          ::std::option::Option::Some(actual)
+            if reader.namespace_matches(actual.as_str()) => {}
+          ::std::option::Option::Some(actual) => {
             let msg = ::std::format!(
               "bad namespace for {}, found {}",
               #element_name,
@@ -316,12 +315,14 @@ impl YaSerdeAttribute {
             );
             return ::std::result::Result::Err(::ofdbox_yaserde::Error::custom(msg));
           }
-          (_, ::std::option::Option::None) => {
-            let msg = ::std::format!(
-              "missing namespace for {}",
-              #element_name
-            );
-            return ::std::result::Result::Err(::ofdbox_yaserde::Error::custom(msg));
+          ::std::option::Option::None => {
+            if !reader.namespace_matches("") {
+              let msg = ::std::format!(
+                "missing namespace for {}",
+                #element_name
+              );
+              return ::std::result::Result::Err(::ofdbox_yaserde::Error::custom(msg));
+            }
           }
         }
       );

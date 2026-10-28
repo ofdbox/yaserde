@@ -328,8 +328,8 @@ macro_rules! test_for_attribute_type {
 macro_rules! deserialize_and_validate {
   ($content: expr, $model: expr, $struct: tt) => {
     log::debug!("deserialize_and_validate @ {}:{}", file!(), line!());
-    let loaded: Result<$struct, String> = ofdbox_yaserde::de::from_str($content)
-      .map_err(|e: ofdbox_yaserde::Error| e.to_string());
+    let loaded: Result<$struct, String> =
+      ofdbox_yaserde::de::from_str($content).map_err(|e: ofdbox_yaserde::Error| e.to_string());
     assert_eq!(loaded, Ok($model));
   };
 }
@@ -339,8 +339,8 @@ macro_rules! deserialize_and_validate {
 macro_rules! serialize_and_validate {
   ($model: expr, $content: expr) => {
     log::debug!("serialize_and_validate @ {}:{}", file!(), line!());
-    let data: Result<String, String> = ofdbox_yaserde::ser::to_string(&$model)
-      .map_err(|e: ofdbox_yaserde::Error| e.to_string());
+    let data: Result<String, String> =
+      ofdbox_yaserde::ser::to_string(&$model).map_err(|e: ofdbox_yaserde::Error| e.to_string());
 
     let content = &format!(r#"<?xml version="1.0" encoding="UTF-8"?>{}"#, $content);
     assert_eq!(

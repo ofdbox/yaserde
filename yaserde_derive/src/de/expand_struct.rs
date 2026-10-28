@@ -280,16 +280,18 @@ pub fn parse(
 
       match field.get_type() {
         Field::FieldStruct { .. } => Ok(quote! {
-          #value_label = Some(::ofdbox_yaserde::de::from_str_with_namespace(
+          #value_label = Some(::ofdbox_yaserde::de::from_str_with_context(
             &unused_xml_elements,
             reader.current_namespace(),
+            reader.current_namespace_aliases(),
           )?);
         }),
         Field::FieldOption { data_type } => match *data_type {
           Field::FieldStruct { .. } => Ok(quote! {
-            #value_label = ::ofdbox_yaserde::de::from_str_with_namespace(
+            #value_label = ::ofdbox_yaserde::de::from_str_with_context(
               &unused_xml_elements,
               reader.current_namespace(),
+              reader.current_namespace_aliases(),
             )
             .ok();
           }),
