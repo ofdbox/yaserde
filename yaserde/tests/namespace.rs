@@ -868,3 +868,39 @@ fn inherited_namespace_accepts_alias() {
 
   deserialize_and_validate!(content, model, Root);
 }
+
+#[test]
+fn child_switches_namespace_from_root_declarations() {
+  init();
+
+  #[derive(Debug, PartialEq, YaDeserialize, YaSerialize)]
+  #[yaserde(rename = "child", namespace = "http://www.sample.com/ns/other")]
+  struct Child {
+    value: String,
+  }
+
+  #[derive(Debug, PartialEq, YaDeserialize, YaSerialize)]
+  #[yaserde(
+    rename = "root",
+    namespace = "http://www.sample.com/ns/domain",
+    xmlns = {
+      "ns" = "http://www.sample.com/ns/domain",
+      "other" = "http://www.sample.com/ns/other"
+    }
+  )]
+  struct Root {
+    #[yaserde(namespace = "http://www.sample.com/ns/other")]
+    child: Child,
+  }
+
+  let content = r#"<ns:root xmlns:ns="http://www.sample.com/ns/domain" xmlns:other="http://www.sample.com/ns/other"><other:child><other:value>ok</other:value></other:child></ns:root>"#;
+
+  let model = Root {
+    child: Child {
+      value: "ok".to_owned(),
+    },
+  };
+
+  serialize_and_validate!(model, content);
+  deserialize_and_validate!(content, model, Root);
+}
