@@ -933,3 +933,57 @@ fn namespaced_attribute_serializes_with_prefix() {
     r#"<root xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://example.com" />"#;
   serialize_and_validate!(model, content);
 }
+
+#[test]
+fn enum_variant_inherits_namespace_for_nested_struct() {
+  #[derive(Debug, Default, PartialEq, YaSerialize, YaDeserialize)]
+  #[yaserde(
+    rename = "root",
+    namespace = "http://www.ofdspec.org/2016",
+    xmlns = {
+      "ns" = "http://www.ofdspec.org/2016"
+    }
+  )]
+  struct Root {
+    #[yaserde(rename = "object")]
+    object: Obj,
+  }
+
+  #[derive(Debug, PartialEq, YaSerialize, YaDeserialize)]
+  #[yaserde(rename = "object")]
+  enum Obj {
+    #[yaserde(rename = "PathObject")]
+    Path(Path),
+  }
+
+  impl Default for Obj {
+    fn default() -> Self {
+      Self::Path(Path::default())
+    }
+  }
+
+  #[derive(Debug, Default, PartialEq, YaSerialize, YaDeserialize)]
+  #[yaserde(rename = "PathObject")]
+  struct Path {
+    #[yaserde(rename = "StrokeColor")]
+    stroke: Inner,
+  }
+
+  #[derive(Debug, Default, PartialEq, YaSerialize, YaDeserialize)]
+  #[yaserde(rename = "StrokeColor")]
+  struct Inner {
+    #[yaserde(attribute = true, rename = "Value")]
+    value: String,
+  }
+
+  let model = Root {
+    object: Obj::Path(Path {
+      stroke: Inner {
+        value: "red".to_owned(),
+      },
+    }),
+  };
+  let xml = yaserde::ser::to_string(&model).unwrap();
+  let parsed: Result<Root, _> = yaserde::de::from_str(&xml);
+  assert_eq!(parsed.map_err(|e| e.to_string()), Ok(model));
+}

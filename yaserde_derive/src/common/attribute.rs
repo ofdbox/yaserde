@@ -302,6 +302,31 @@ impl YaSerdeAttribute {
       );
     }
 
+    if self.namespaces.is_empty() {
+      return quote!(
+        match (reader.current_namespace(), #element_namespace) {
+          (::std::option::Option::Some(current), ::std::option::Option::Some(actual))
+            if current == actual.as_str() => {}
+          (::std::option::Option::None, ::std::option::Option::None) => {}
+          (_, ::std::option::Option::Some(actual)) => {
+            let msg = ::std::format!(
+              "bad namespace for {}, found {}",
+              #element_name,
+              actual.as_str()
+            );
+            return ::std::result::Result::Err(::yaserde::Error::custom(msg));
+          }
+          (_, ::std::option::Option::None) => {
+            let msg = ::std::format!(
+              "missing namespace for {}",
+              #element_name
+            );
+            return ::std::result::Result::Err(::yaserde::Error::custom(msg));
+          }
+        }
+      );
+    }
+
     let configured_prefix = if take_root_prefix {
       self.prefix.clone()
     } else {
