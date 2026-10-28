@@ -11,6 +11,13 @@ pub fn from_str<T: YaDeserialize>(s: &str) -> Result<T> {
   from_reader(s.as_bytes())
 }
 
+/// Deserialize a string with an inherited namespace context.
+pub fn from_str_with_namespace<T: YaDeserialize>(s: &str, namespace: Option<&str>) -> Result<T> {
+  let mut deserializer = Deserializer::new_from_reader(s.as_bytes());
+  deserializer.set_current_namespace(namespace.map(::std::string::ToString::to_string));
+  <T as YaDeserialize>::deserialize(&mut deserializer)
+}
+
 pub fn from_reader<R: Read, T: YaDeserialize>(reader: R) -> Result<T> {
   <T as YaDeserialize>::deserialize(&mut Deserializer::new_from_reader(reader))
 }

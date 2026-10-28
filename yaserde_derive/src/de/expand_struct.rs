@@ -280,11 +280,18 @@ pub fn parse(
 
       match field.get_type() {
         Field::FieldStruct { .. } => Ok(quote! {
-          #value_label = Some(::yaserde::de::from_str(&unused_xml_elements)?);
+          #value_label = Some(::yaserde::de::from_str_with_namespace(
+            &unused_xml_elements,
+            reader.current_namespace(),
+          )?);
         }),
         Field::FieldOption { data_type } => match *data_type {
           Field::FieldStruct { .. } => Ok(quote! {
-            #value_label = ::yaserde::de::from_str(&unused_xml_elements).ok();
+            #value_label = ::yaserde::de::from_str_with_namespace(
+              &unused_xml_elements,
+              reader.current_namespace(),
+            )
+            .ok();
           }),
           _ => Err(field.unsupported("`flatten` is only supported on struct fields")),
         },
