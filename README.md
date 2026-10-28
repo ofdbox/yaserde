@@ -14,6 +14,8 @@ This library will support XML de/ser-ializing with all specific features.
 - [x] Vec<AnyType>
 - [x] Enum
 - [x] Enum with complex types
+- [x] Named enum variants for serialization
+- [ ] Named enum variants for deserialization (not supported)
 - [x] Option
 - [x] String
 - [x] bool
@@ -91,6 +93,38 @@ Alternate URIs can be accepted on input while output keeps the canonical URI:
 ```
 
 Inherited fields canonicalize input namespaces through these aliases.
+
+## Named enum variants
+
+Named variants can be serialized:
+
+```rust
+#[derive(Debug, PartialEq, YaSerialize)]
+enum Color {
+    #[yaserde(rename = "custom")]
+    Custom {
+        enabled: String,
+        value: u32,
+    },
+}
+```
+
+Deserialization of named variants is not supported because the serialized form
+has no variant wrapper or discriminator. Use a tuple variant with a struct
+instead:
+
+```rust
+#[derive(Debug, PartialEq, YaSerialize, YaDeserialize)]
+enum Color {
+    Custom(CustomColor),
+}
+
+#[derive(Debug, PartialEq, YaSerialize, YaDeserialize)]
+struct CustomColor {
+    enabled: String,
+    value: u32,
+}
+```
 
 ## Custom De/Ser-rializer
 

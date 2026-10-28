@@ -105,7 +105,8 @@ fn basic_enum() {
 </base>"#;
 
   serialize_and_validate!(model, content);
-  // TODO
+  // Named enum variant deserialization is not supported: the serialized form
+  // has no variant wrapper or discriminator.
   // deserialize_and_validate!(content, model, XmlStruct);
 }
 
@@ -293,7 +294,8 @@ fn unnamed_enum() {
 
   let content = "<base><color /></base>";
   serialize_and_validate!(model, content);
-  // TODO
+  // Named enum variant deserialization is not supported: the serialized form
+  // has no variant wrapper or discriminator.
   // deserialize_and_validate!(content, model, XmlStruct);
 
   let model = XmlStruct {
@@ -311,7 +313,8 @@ fn unnamed_enum() {
 
   let content = "<base><color /></base>";
   serialize_and_validate!(model, content);
-  // TODO
+  // Named enum variant deserialization is not supported: the serialized form
+  // has no variant wrapper or discriminator.
   // deserialize_and_validate!(content, model, XmlStruct);
 
   let model = XmlStruct {
